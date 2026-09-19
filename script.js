@@ -1,16 +1,24 @@
 (() => {
   const body = document.body;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Reveal on scroll
   const revealEls = [...document.querySelectorAll('.reveal')];
   if ('IntersectionObserver' in window && !reduceMotion) {
     const revealObserver = new IntersectionObserver((entries, observer) => {
       entries.forEach(entry => {
-        if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); }
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
       });
     }, { threshold: .14, rootMargin: '0px 0px -8% 0px' });
     revealEls.forEach(el => revealObserver.observe(el));
-  } else revealEls.forEach(el => el.classList.add('is-visible'));
+  } else {
+    revealEls.forEach(el => el.classList.add('is-visible'));
+  }
 
+  // Site theme follows the section in view
   const themedSections = [...document.querySelectorAll('[data-theme]')];
   if ('IntersectionObserver' in window) {
     const themeObserver = new IntersectionObserver((entries) => {
@@ -20,11 +28,15 @@
     themedSections.forEach(section => themeObserver.observe(section));
   }
 
+  // Event rail navigation + active state
   const railButtons = [...document.querySelectorAll('.rail-item')];
-  railButtons.forEach(btn => btn.addEventListener('click', () => {
-    const target = document.getElementById(btn.dataset.event);
-    if (target) target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-  }));
+  railButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.event);
+      if (target) target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    });
+  });
+
   const eventSections = [...document.querySelectorAll('[data-event-section]')];
   if ('IntersectionObserver' in window) {
     const eventObserver = new IntersectionObserver((entries) => {
@@ -42,8 +54,14 @@
     eventSections.forEach(section => eventObserver.observe(section));
   }
 
+  // Countdown to start of first event in India Standard Time
   const target = new Date('2027-01-04T19:00:00+05:30').getTime();
-  const parts = { days:document.getElementById('days'), hours:document.getElementById('hours'), minutes:document.getElementById('minutes'), seconds:document.getElementById('seconds') };
+  const parts = {
+    days: document.getElementById('days'),
+    hours: document.getElementById('hours'),
+    minutes: document.getElementById('minutes'),
+    seconds: document.getElementById('seconds')
+  };
   const updateCountdown = () => {
     let diff = Math.max(0, target - Date.now());
     const days = Math.floor(diff / 86400000); diff %= 86400000;
@@ -59,16 +77,19 @@
   const timer = setInterval(updateCountdown, 1000);
   window.addEventListener('pagehide', () => clearInterval(timer), { once:true });
 
+  // Poster modal
   const modal = document.getElementById('posterModal');
   const modalImage = document.getElementById('posterImage');
   const modalTitle = document.getElementById('posterTitle');
   const modalClose = document.getElementById('posterClose');
-  document.querySelectorAll('.poster-open').forEach(btn => btn.addEventListener('click', () => {
-    modalImage.src = btn.dataset.poster;
-    modalImage.alt = btn.dataset.title + ' invitation artwork';
-    modalTitle.textContent = btn.dataset.title;
-    if (typeof modal.showModal === 'function') modal.showModal();
-  }));
+  document.querySelectorAll('.poster-open').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modalImage.src = btn.dataset.poster;
+      modalImage.alt = `${btn.dataset.title} invitation artwork`;
+      modalTitle.textContent = btn.dataset.title;
+      if (typeof modal.showModal === 'function') modal.showModal();
+    });
+  });
   modalClose.addEventListener('click', () => modal.close());
   modal.addEventListener('click', e => {
     const rect = modal.getBoundingClientRect();
@@ -76,6 +97,7 @@
     if (!inside) modal.close();
   });
 
+  // Mobile menu
   const menuToggle = document.getElementById('menuToggle');
   const siteNav = document.getElementById('siteNav');
   menuToggle.addEventListener('click', () => {
@@ -83,37 +105,60 @@
     menuToggle.setAttribute('aria-expanded', String(open));
   });
   siteNav.addEventListener('click', e => {
-    if (e.target.closest('a')) { siteNav.classList.remove('is-open'); menuToggle.setAttribute('aria-expanded','false'); }
+    if (e.target.closest('a')) {
+      siteNav.classList.remove('is-open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+    }
   });
 
+  // Add full wedding weekend as an ICS file
   document.getElementById('calendarButton').addEventListener('click', () => {
-    const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Zaid & Fatima//Wedding Weekend//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:zf-udaipur-2027@meetthememons','DTSTAMP:20260919T000000Z','DTSTART;VALUE=DATE:20270104','DTEND;VALUE=DATE:20270107','SUMMARY:Zaid & Fatima — Udaipur Wedding Celebrations','LOCATION:Trident, Udaipur, Rajasthan, India','DESCRIPTION:Wedding celebrations for Zaid & Fatima. 04–06 January 2027. #MeetTheMemons','END:VEVENT','END:VCALENDAR'].join('\r\n');
+    const ics = [
+      'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Zaid & Fatima//Wedding Weekend//EN','CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT','UID:zf-udaipur-2027@meetthememons','DTSTAMP:20260919T000000Z',
+      'DTSTART;VALUE=DATE:20270104','DTEND;VALUE=DATE:20270107',
+      'SUMMARY:Zaid & Fatima — Udaipur Wedding Celebrations',
+      'LOCATION:Trident, Udaipur, Rajasthan, India',
+      'DESCRIPTION:Wedding celebrations for Zaid & Fatima. 04–06 January 2027. #MeetTheMemons',
+      'END:VEVENT','END:VCALENDAR'
+    ].join('\r\n');
     const blob = new Blob([ics], { type:'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download='Zaid-Fatima-Udaipur-2027.ics';
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url),1000);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Zaid-Fatima-Udaipur-2027.ics';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 
+  // Copy hashtag with fallback
   const copyTag = document.getElementById('copyTag');
   const copyStatus = document.getElementById('copyStatus');
   copyTag.addEventListener('click', async () => {
-    const value='#MeetTheMemons';
+    const value = '#MeetTheMemons';
     try {
-      if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(value);
-      else {
-        const ta=document.createElement('textarea'); ta.value=value; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = value; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
       }
-      copyStatus.textContent='Hashtag copied.';
-    } catch { copyStatus.textContent='Copy this: #MeetTheMemons'; }
+      copyStatus.textContent = 'Hashtag copied.';
+    } catch {
+      copyStatus.textContent = 'Copy this: #MeetTheMemons';
+    }
   });
 
+  // Subtle cursor light on fine pointers only
   const orb = document.querySelector('.cursor-orb');
   if (window.matchMedia('(hover:hover) and (pointer:fine)').matches && !reduceMotion) {
-    let raf=null,x=0,y=0;
+    let raf = null, x = 0, y = 0;
     document.addEventListener('pointermove', e => {
-      x=e.clientX; y=e.clientY; orb.style.opacity='.85';
-      if (!raf) raf=requestAnimationFrame(() => { orb.style.left=x+'px'; orb.style.top=y+'px'; raf=null; });
-    }, {passive:true});
-    document.addEventListener('pointerleave', () => { orb.style.opacity='0'; });
+      x = e.clientX; y = e.clientY; orb.style.opacity = '.85';
+      if (!raf) raf = requestAnimationFrame(() => {
+        orb.style.left = `${x}px`; orb.style.top = `${y}px`; raf = null;
+      });
+    }, { passive:true });
+    document.addEventListener('pointerleave', () => { orb.style.opacity = '0'; });
   }
 })();

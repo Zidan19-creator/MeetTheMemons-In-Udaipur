@@ -54,101 +54,131 @@
     eventSections.forEach(section => eventObserver.observe(section));
   }
 
-  // Sufi section-only music. The clip loops while this section is active.
-  // We prime audio on the visitor's first real interaction (including touch used to scroll),
-  // then the section observer controls the audible fade in/out.
+  // Strict Sufi-only music.
+  // The Sufi section must cross the viewport's center line before audio may play.
+  // Leaving that zone stops and resets the track immediately.
   const sufiSection = document.getElementById('sufi');
   const sufiAudio = document.getElementById('sufiAudio');
   const enterCelebration = document.getElementById('enterCelebration');
-  let sufiInView = false;
   let musicUnlocked = false;
+  let sufiActive = false;
   let musicFadeFrame = null;
+  let scrollFrame = null;
 
-  const fadeSufiAudio = (targetVolume, duration = 1200) => {
+  const cancelSufiFade = () => {
+    if (musicFadeFrame) {
+      cancelAnimationFrame(musicFadeFrame);
+      musicFadeFrame = null;
+    }
+  };
+
+  const fadeSufiAudio = (targetVolume, duration = 900) => {
     if (!sufiAudio) return;
-    if (musicFadeFrame) cancelAnimationFrame(musicFadeFrame);
+    cancelSufiFade();
     const from = sufiAudio.volume;
     const started = performance.now();
+
     const step = (now) => {
+      if (!sufiActive && targetVolume > 0) return;
       const p = Math.min(1, (now - started) / duration);
       const eased = p * p * (3 - 2 * p);
       sufiAudio.volume = Math.max(0, Math.min(1, from + (targetVolume - from) * eased));
-      if (p < 1) musicFadeFrame = requestAnimationFrame(step);
+
+      if (p < 1) {
+        musicFadeFrame = requestAnimationFrame(step);
+      } else {
+        musicFadeFrame = null;
+      }
     };
+
     musicFadeFrame = requestAnimationFrame(step);
   };
 
-  const primeSufiMusic = () => {
-    if (!sufiAudio || musicUnlocked) return;
-    sufiAudio.loop = true;
+  const hardStopSufi = () => {
+    if (!sufiAudio) return;
+    cancelSufiFade();
     sufiAudio.volume = 0;
-
-    const started = sufiAudio.play();
-    if (started && typeof started.then === 'function') {
-      started.then(() => {
-        musicUnlocked = true;
-        if (sufiInView) {
-          sufiAudio.currentTime = 0;
-          fadeSufiAudio(.72, 1500);
-        }
-      }).catch(() => {
-        // Some browsers block audible media until a qualifying user gesture.
-        // A later touch/click/keypress will try again automatically.
-      });
-    } else {
-      musicUnlocked = true;
-    }
+    sufiAudio.pause();
+    sufiAudio.currentTime = 0;
   };
 
-  const startSufiSectionMusic = () => {
-    if (!sufiAudio) return;
+  const unlockSufiAudio = () => {
+    if (!sufiAudio || musicUnlocked) return;
+
+    // Prime the media element silently during a real user gesture.
+    // Immediately pause it so nothing is audible before Sufi Night.
     sufiAudio.loop = true;
-    sufiAudio.currentTime = 0;
-
-    if (musicUnlocked) {
-      fadeSufiAudio(.72, 1500);
-      return;
-    }
-
-    // Try immediately when the guest scrolls into Sufi.
-    // If the browser blocks it, the first touch/click used while browsing will unlock it.
     sufiAudio.volume = 0;
-    const started = sufiAudio.play();
-    if (started && typeof started.then === 'function') {
-      started.then(() => {
+    const attempt = sufiAudio.play();
+
+    if (attempt && typeof attempt.then === 'function') {
+      attempt.then(() => {
+        sufiAudio.pause();
+        sufiAudio.currentTime = 0;
         musicUnlocked = true;
-        fadeSufiAudio(.72, 1500);
+        if (sufiActive) startSufi();
       }).catch(() => {});
     } else {
+      sufiAudio.pause();
+      sufiAudio.currentTime = 0;
       musicUnlocked = true;
-      fadeSufiAudio(.72, 1500);
+      if (sufiActive) startSufi();
     }
   };
 
-  // Do not require the Enter button: any normal interaction can unlock the audio.
-  if (enterCelebration) enterCelebration.addEventListener('click', primeSufiMusic);
-  document.addEventListener('pointerdown', primeSufiMusic, { once: true, passive: true });
-  document.addEventListener('touchstart', primeSufiMusic, { once: true, passive: true });
-  document.addEventListener('keydown', primeSufiMusic, { once: true });
-  document.addEventListener('wheel', primeSufiMusic, { once: true, passive: true });
+  const startSufi = () => {
+    if (!sufiAudio || !sufiActive) return;
+    sufiAudio.loop = true;
+    sufiAudio.currentTime = 0;
+    sufiAudio.volume = 0;
 
-  if (sufiSection && sufiAudio && 'IntersectionObserver' in window) {
-    const sufiMusicObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        const visible = entry.isIntersecting && entry.intersectionRatio >= .42;
-        const wasVisible = sufiInView;
-        sufiInView = visible;
-
-        if (visible && !wasVisible) {
-          startSufiSectionMusic();
-        } else if (!visible && wasVisible) {
-          fadeSufiAudio(0, 1200);
-        }
+    const attempt = sufiAudio.play();
+    if (attempt && typeof attempt.then === 'function') {
+      attempt.then(() => {
+        musicUnlocked = true;
+        if (sufiActive) fadeSufiAudio(.72, 1100);
+        else hardStopSufi();
+      }).catch(() => {
+        // Browser still wants a user gesture. The next touch/click will unlock it.
       });
-    }, { threshold: [0, .42, .65] });
+    } else {
+      musicUnlocked = true;
+      fadeSufiAudio(.72, 1100);
+    }
+  };
 
-    sufiMusicObserver.observe(sufiSection);
-  }
+  const updateSufiZone = () => {
+    scrollFrame = null;
+    if (!sufiSection) return;
+
+    const rect = sufiSection.getBoundingClientRect();
+    const centerLine = window.innerHeight * 0.5;
+    const activeNow = rect.top <= centerLine && rect.bottom >= centerLine;
+
+    if (activeNow === sufiActive) return;
+    sufiActive = activeNow;
+
+    if (sufiActive) {
+      startSufi();
+    } else {
+      hardStopSufi();
+    }
+  };
+
+  const queueSufiZoneCheck = () => {
+    if (scrollFrame) return;
+    scrollFrame = requestAnimationFrame(updateSufiZone);
+  };
+
+  // Any genuine interaction can unlock audio, but it is immediately paused again.
+  if (enterCelebration) enterCelebration.addEventListener('click', unlockSufiAudio);
+  document.addEventListener('pointerdown', unlockSufiAudio, { once: true, passive: true });
+  document.addEventListener('touchstart', unlockSufiAudio, { once: true, passive: true });
+  document.addEventListener('keydown', unlockSufiAudio, { once: true });
+
+  window.addEventListener('scroll', queueSufiZoneCheck, { passive: true });
+  window.addEventListener('resize', queueSufiZoneCheck, { passive: true });
+  updateSufiZone();
 
   // Countdown to start of first event in India Standard Time
   const target = new Date('2027-01-04T19:00:00+05:30').getTime();

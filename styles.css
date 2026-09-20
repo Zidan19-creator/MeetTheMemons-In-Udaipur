@@ -358,3 +358,27 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     opacity: 0 !important;
   }
 }
+
+
+/* Mobile story artwork placement: keep it visually between countdown and event intro */
+@media (max-width: 860px) {
+  .prologue {
+    gap: 28px;
+    padding-bottom: 34px;
+  }
+
+  .prologue-art {
+    order: 2;
+    margin-top: 18px;
+    margin-bottom: -70px;
+  }
+
+  .crest-frame img {
+    transform: translateY(34px);
+    transform-origin: center top;
+  }
+
+  .events-intro {
+    padding-top: 58px;
+  }
+}

@@ -199,3 +199,47 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
   *, *::before, *::after { animation:none !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
   .reveal { opacity:1; transform:none; }
 }
+
+
+/* Mobile hero cleanup requested 2026-09-20 */
+@media (max-width: 600px) {
+  .hero-copy > .eyebrow,
+  .hero-copy > .monogram,
+  .hero-copy > h1,
+  .hero-copy > .hero-sub,
+  .hero-copy > .hero-meta {
+    display: none !important;
+  }
+
+  .hero {
+    min-height: 100svh;
+    align-items: stretch;
+  }
+
+  .hero-copy {
+    width: 100%;
+    min-height: 100svh;
+    padding: 0 18px max(58px, calc(42px + env(safe-area-inset-bottom)));
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: stretch;
+  }
+
+  .hero-actions {
+    width: min(100%, 360px);
+    margin: 0 auto 74px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .hero-actions .button {
+    width: 100%;
+    min-height: 58px;
+  }
+
+  .scroll-cue {
+    bottom: max(14px, env(safe-area-inset-bottom));
+  }
+}

@@ -62,3 +62,5 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Bake correct Bismillah into final hero cover"
           git push
+
+# rerun after repaired Bismillah asset

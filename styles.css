@@ -411,3 +411,25 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
 .footer a {
   color: #f2e5d8;
 }
+
+
+.site-credit {
+  opacity: .7;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: .08em;
+  font-size: 9px;
+}
+
+@media (max-width: 600px) {
+  .footer {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .site-credit {
+    width: 100%;
+    order: 3;
+    margin-top: 4px;
+  }
+}

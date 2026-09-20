@@ -308,7 +308,7 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
 
 @media (max-width: 600px) {
   .hero-bismillah-glow {
-    top: 68px;
+    top: 50px;
     width: min(62vw, 430px);
     height: 74px;
   }

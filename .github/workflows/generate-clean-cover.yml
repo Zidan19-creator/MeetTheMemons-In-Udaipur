@@ -1,4 +1,4 @@
-name: Generate final wedding cover
+name: Build final hero cover
 
 on:
   push:
@@ -21,57 +21,44 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install image tools
-        run: python -m pip install --quiet pillow numpy opencv-python-headless
+      - name: Install Pillow
+        run: python -m pip install --quiet pillow
 
-      - name: Build corrected clean cover
+      - name: Composite correct Bismillah onto clean Monday cover
         run: |
           python - <<'PY'
-          from PIL import Image, ImageDraw, ImageFont
-          import numpy as np, cv2, os
+          from PIL import Image, ImageEnhance
 
-          src = "assets/cover-hq.webp"
-          out = "assets/cover-final-hq.webp"
+          base_path = "assets/cover-final-hq.webp"
+          bis_path = "assets/bismillah-correct.png"
+          out_path = "assets/cover-final-bismillah-hq.webp"
 
-          base = np.array(Image.open(src).convert("RGB"))
+          base = Image.open(base_path).convert("RGBA")
+          bis = Image.open(bis_path).convert("RGBA")
 
-          # 1) Remove only the baked-in Bismillah from the otherwise clean sky.
-          mask = np.zeros(base.shape[:2], dtype=np.uint8)
-          mask[85:155, 335:690] = 255
-          bgr = cv2.cvtColor(base, cv2.COLOR_RGB2BGR)
-          cleaned = cv2.inpaint(bgr, mask, 7, cv2.INPAINT_TELEA)
-          rgb = cv2.cvtColor(cleaned, cv2.COLOR_BGR2RGB)
+          # Keep the exact supplied calligraphy; only scale it.
+          target_w = 440
+          target_h = round(bis.height * target_w / bis.width)
+          bis = bis.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
-          # 2) Remove the old Sunday date line only.
-          mask2 = np.zeros(rgb.shape[:2], dtype=np.uint8)
-          mask2[732:785, 195:830] = 255
-          bgr2 = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-          cleaned2 = cv2.inpaint(bgr2, mask2, 7, cv2.INPAINT_TELEA)
-          rgb2 = cv2.cvtColor(cleaned2, cv2.COLOR_BGR2RGB)
+          # Darken very slightly so it matches the invitation artwork.
+          rgb = ImageEnhance.Brightness(bis.convert("RGB")).enhance(0.82)
+          rgb.putalpha(bis.getchannel("A"))
+          bis = rgb
 
-          im = Image.fromarray(rgb2)
-          draw = ImageDraw.Draw(im)
-          font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 26)
+          x = (base.width - target_w) // 2
+          y = 94
+          base.alpha_composite(bis, (x, y))
 
-          text = "MONDAY, 4TH JANUARY 2027"
-          tracking = 5.7
-          widths = [draw.textlength(ch, font=font) for ch in text]
-          total = sum(widths) + tracking * (len(text) - 1)
-          x = (im.width - total) / 2
-          y = 743
-          for ch, cw in zip(text, widths):
-              draw.text((x, y), ch, font=font, fill=(62, 50, 39))
-              x += cw + tracking
-
-          im.save(out, "WEBP", quality=95, method=6)
-          print(f"Generated {out}")
+          base.convert("RGB").save(out_path, "WEBP", quality=95, method=6)
+          print(f"Generated {out_path} at {base.width}x{base.height}; Bismillah {target_w}x{target_h} at ({x},{y})")
           PY
 
-      - name: Commit final cover
+      - name: Commit final hero cover
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/cover-final-hq.webp
+          git add assets/cover-final-bismillah-hq.webp
           git diff --cached --quiet && exit 0
-          git commit -m "Generate clean Monday cover"
+          git commit -m "Bake correct Bismillah into final hero cover"
           git push

@@ -253,60 +253,101 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
 }
 
 
-/* Corrected Bismillah overlay v1 */
+/* Corrected Bismillah overlay v2 — precise mobile mask */
 .hero-bismillah {
   position: absolute;
-  top: 82px;
+  top: 78px;
   left: 50%;
-  width: min(45vw, 430px);
+  width: min(64vw, 390px);
   transform: translateX(-50%);
   z-index: 7;
   pointer-events: none;
   isolation: isolate;
 }
+
+/* Covers only the old calligraphy baked into the image.
+   No blur, so the “Together with their families” line stays untouched. */
 .hero-bismillah::before {
   content: "";
   position: absolute;
   z-index: -1;
-  inset: -8px -16px;
-  background: rgba(195, 188, 180, .97);
-  border-radius: 999px;
-  filter: blur(5px);
+  left: 50%;
+  top: 50%;
+  width: 112%;
+  height: 78px;
+  transform: translate(-50%, -50%);
+  background:
+    linear-gradient(
+      180deg,
+      rgb(198, 191, 182) 0%,
+      rgb(195, 188, 181) 58%,
+      rgb(194, 187, 181) 100%
+    );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 7%,
+    #000 93%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 7%,
+    #000 93%,
+    transparent 100%
+  );
 }
+
 .hero-bismillah img {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: auto;
-  filter: brightness(.72) sepia(.18);
+  filter: brightness(.72) sepia(.12);
 }
+
+/* Soft reading shimmer: right-to-left, then a long pause */
 .hero-bismillah::after {
   content: "";
   position: absolute;
-  top: -12%;
-  bottom: -12%;
-  right: -28%;
-  width: 24%;
-  background: linear-gradient(90deg, transparent, rgba(233, 191, 104, .72), transparent);
-  filter: blur(4px);
+  z-index: 2;
+  top: -8%;
+  bottom: -8%;
+  right: -22%;
+  width: 19%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(238, 197, 112, .72),
+    transparent
+  );
+  filter: blur(3px);
   mix-blend-mode: screen;
-  transform: skewX(-16deg);
-  animation: bismillahRead 5.5s ease-in-out infinite;
+  transform: skewX(-14deg);
+  opacity: 0;
+  animation: bismillahRead 6.2s ease-in-out infinite;
 }
+
 @keyframes bismillahRead {
-  0%, 18% { right: -28%; opacity: 0; }
-  25% { opacity: .15; }
-  42% { opacity: .72; }
-  68% { right: 106%; opacity: 0; }
-  100% { right: 106%; opacity: 0; }
+  0%, 24% { right: -22%; opacity: 0; }
+  30% { opacity: .18; }
+  46% { opacity: .72; }
+  68% { right: 104%; opacity: 0; }
+  100% { right: 104%; opacity: 0; }
 }
+
 @media (max-width: 600px) {
   .hero-bismillah {
-    top: 82px;
-    width: min(58vw, 330px);
+    top: 78px;
+    width: min(64vw, 390px);
   }
-  .hero-bismillah::before {
-    inset: -6px -12px;
-    background: rgba(195, 188, 180, .98);
-    filter: blur(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-bismillah::after {
+    animation: none !important;
+    display: none;
   }
 }

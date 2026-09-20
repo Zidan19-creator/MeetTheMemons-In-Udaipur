@@ -1,4 +1,4 @@
-name: Generate clean wedding cover
+name: Generate corrected wedding cover
 
 on:
   push:
@@ -24,42 +24,58 @@ jobs:
       - name: Install Pillow
         run: python -m pip install --quiet pillow numpy
 
-      - name: Create clean cover without baked-in Bismillah
+      - name: Build clean corrected cover
         run: |
           python - <<'PY'
-          from PIL import Image
+          from PIL import Image, ImageDraw, ImageFont
           import numpy as np
 
-          src = "assets/cover-hq.webp"
-          out = "assets/cover-clean-hq.webp"
+          src = "assets/cover-clean-hq.webp"
+          out = "assets/cover-front-fixed-hq.webp"
 
           im = Image.open(src).convert("RGB")
           a = np.asarray(im).copy()
           h, w, _ = a.shape
 
-          # The Bismillah is in the otherwise-empty sky area above
-          # "TOGETHER WITH THEIR FAMILIES". Rebuild only that sky strip.
-          y0 = round(h * 0.045)
-          y1 = round(h * 0.145)
-          band = max(4, round(h * 0.008))
+          # Replace only the old date line's sky area, leaving architecture untouched.
+          x0, x1 = round(w * 0.19), round(w * 0.81)
+          y0, y1 = round(h * 0.574), round(h * 0.617)
+          band = max(3, round(h * 0.006))
 
-          top = a[max(0, y0-band):y0].mean(axis=0)
-          bottom = a[y1:min(h, y1+band)].mean(axis=0)
+          top = a[max(0, y0-band):y0, x0:x1].astype(float).mean(axis=0)
+          bottom = a[y1:min(h, y1+band), x0:x1].astype(float).mean(axis=0)
 
           for y in range(y0, y1):
-              t = (y - y0) / max(1, (y1 - y0 - 1))
-              row = (1.0 - t) * top + t * bottom
-              a[y] = np.clip(row, 0, 255).astype(np.uint8)
+              t = (y - y0) / max(1, y1-y0-1)
+              a[y, x0:x1] = np.clip((1-t)*top + t*bottom, 0, 255).astype(np.uint8)
 
-          Image.fromarray(a).save(out, "WEBP", quality=95, method=6)
-          print(f"Generated {out} from {src} ({w}x{h})")
+          im = Image.fromarray(a)
+          d = ImageDraw.Draw(im)
+
+          font_size = max(20, round(w * 0.0275))
+          font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size)
+          text = "MONDAY, 4TH JANUARY 2027"
+          tracking = w * 0.0040
+
+          widths = [d.textlength(ch, font=font) for ch in text]
+          tw = sum(widths) + tracking * (len(text)-1)
+          x = (w - tw) / 2
+          y = round(h * 0.583)
+
+          color = (66, 51, 38)
+          for ch, cw in zip(text, widths):
+              d.text((x, y), ch, font=font, fill=color)
+              x += cw + tracking
+
+          im.save(out, "WEBP", quality=95, method=6)
+          print(f"Generated {out}: {w}x{h}")
           PY
 
-      - name: Commit generated clean cover
+      - name: Commit corrected cover
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/cover-clean-hq.webp
+          git add assets/cover-front-fixed-hq.webp
           git diff --cached --quiet && exit 0
-          git commit -m "Generate clean cover without Bismillah"
+          git commit -m "Correct front cover date to Monday"
           git push

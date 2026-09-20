@@ -413,23 +413,28 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
 }
 
 
-.site-credit {
-  opacity: .7;
-  text-align: center;
-  text-transform: none;
-  letter-spacing: .08em;
-  font-size: 9px;
+
+
+.creator-signature {
+  margin: 30px auto 0;
+  max-width: 560px;
+  font-family: var(--serif);
+  font-size: clamp(18px, 2.2vw, 28px);
+  line-height: 1.4;
+  color: #f2e5d8;
+  opacity: .96;
+  letter-spacing: .02em;
+}
+
+.creator-signature strong {
+  color: #d4aa6d;
+  font-weight: 500;
 }
 
 @media (max-width: 600px) {
-  .footer {
-    justify-content: center;
-    text-align: center;
-  }
-
-  .site-credit {
-    width: 100%;
-    order: 3;
-    margin-top: 4px;
+  .creator-signature {
+    margin-top: 26px;
+    padding: 0 10px;
+    font-size: 18px;
   }
 }

@@ -243,3 +243,11 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     bottom: max(14px, env(safe-area-inset-bottom));
   }
 }
+
+
+/* Nudge mobile hero action buttons lower */
+@media (max-width: 600px) {
+  .hero-actions {
+    margin-bottom: 34px !important;
+  }
+}

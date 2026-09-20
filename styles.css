@@ -80,13 +80,25 @@ button { font: inherit; }
 .prologue { min-height:760px; padding:120px 7vw; display:grid; grid-template-columns:minmax(280px,.8fr) minmax(360px,1fr); gap:8vw; align-items:center; }
 .crest-frame {
   position: relative;
-  max-width: 560px;
+  max-width: 580px;
   margin: auto;
   overflow: visible;
   border-radius: 0;
+  isolation: isolate;
 }
 .crest-frame:before {
-  display: none;
+  content: "";
+  position: absolute;
+  inset: 8% 5%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(245,239,229,.34) 0%,
+    rgba(233,223,208,.16) 54%,
+    rgba(233,223,208,0) 78%
+  );
+  filter: blur(20px);
 }
 .crest-frame img {
   display: block;
@@ -95,7 +107,24 @@ button { font: inherit; }
   aspect-ratio: auto;
   object-fit: contain;
   object-position: center;
-  filter: none;
+  mix-blend-mode: multiply;
+  filter: saturate(.98) contrast(1.015);
+  -webkit-mask-image: radial-gradient(
+    ellipse 76% 76% at 50% 50%,
+    #000 0%,
+    #000 82%,
+    rgba(0,0,0,.96) 88%,
+    rgba(0,0,0,.62) 95%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 76% 76% at 50% 50%,
+    #000 0%,
+    #000 82%,
+    rgba(0,0,0,.96) 88%,
+    rgba(0,0,0,.62) 95%,
+    transparent 100%
+  );
 }
 .prologue-copy h2, .events-title h2, .travel-card h2, .finale h2 { font-family:var(--serif); font-weight:400; font-size:clamp(46px,6.5vw,92px); line-height:.92; letter-spacing:-.05em; margin:0; }
 .prologue-copy h2 em, .travel-card h2 em, .finale h2 em { color:var(--gold); font-weight:400; }

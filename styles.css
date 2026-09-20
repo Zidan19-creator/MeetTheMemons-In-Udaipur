@@ -256,7 +256,7 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
 /* Final robust Bismillah reader glow — calligraphy is baked into hero */
 .hero-bismillah-glow {
   position: absolute;
-  top: 86px;
+  top: 72px;
   left: 50%;
   width: min(62vw, 430px);
   height: 78px;

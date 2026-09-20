@@ -1,0 +1,65 @@
+name: Generate clean wedding cover
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/generate-clean-cover.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Pillow
+        run: python -m pip install --quiet pillow
+
+      - name: Create clean cover without baked-in Bismillah
+        run: |
+          python - <<'PY'
+          from PIL import Image
+          import numpy as np
+
+          src = "assets/cover-hq.webp"
+          out = "assets/cover-clean-hq.webp"
+
+          im = Image.open(src).convert("RGB")
+          a = np.asarray(im).copy()
+          h, w, _ = a.shape
+
+          # The Bismillah is in the otherwise-empty sky area above
+          # "TOGETHER WITH THEIR FAMILIES". Rebuild only that sky strip.
+          y0 = round(h * 0.045)
+          y1 = round(h * 0.145)
+          band = max(4, round(h * 0.008))
+
+          top = a[max(0, y0-band):y0].mean(axis=0)
+          bottom = a[y1:min(h, y1+band)].mean(axis=0)
+
+          for y in range(y0, y1):
+              t = (y - y0) / max(1, (y1 - y0 - 1))
+              row = (1.0 - t) * top + t * bottom
+              a[y] = np.clip(row, 0, 255).astype(np.uint8)
+
+          Image.fromarray(a).save(out, "WEBP", quality=95, method=6)
+          print(f"Generated {out} from {src} ({w}x{h})")
+          PY
+
+      - name: Commit generated clean cover
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/cover-clean-hq.webp
+          git diff --cached --quiet && exit 0
+          git commit -m "Generate clean cover without Bismillah"
+          git push

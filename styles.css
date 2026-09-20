@@ -78,9 +78,25 @@ button { font: inherit; }
 @keyframes scrollLine { 0%,100%{transform:scaleX(.2)} 50%{transform:scaleX(1)} }
 
 .prologue { min-height:760px; padding:120px 7vw; display:grid; grid-template-columns:minmax(280px,.8fr) minmax(360px,1fr); gap:8vw; align-items:center; }
-.crest-frame { position:relative; border-radius:50% 50% 46% 46%; overflow:hidden; max-width:520px; margin:auto; }
-.crest-frame:before { content:""; position:absolute; inset:7%; border:1px solid rgba(173,123,54,.5); border-radius:50%; z-index:2; pointer-events:none; }
-.crest-frame img { width:100%; aspect-ratio:1/1.35; object-fit:cover; object-position:center 36%; filter:saturate(.84); }
+.crest-frame {
+  position: relative;
+  max-width: 560px;
+  margin: auto;
+  overflow: visible;
+  border-radius: 0;
+}
+.crest-frame:before {
+  display: none;
+}
+.crest-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+  object-position: center;
+  filter: none;
+}
 .prologue-copy h2, .events-title h2, .travel-card h2, .finale h2 { font-family:var(--serif); font-weight:400; font-size:clamp(46px,6.5vw,92px); line-height:.92; letter-spacing:-.05em; margin:0; }
 .prologue-copy h2 em, .travel-card h2 em, .finale h2 em { color:var(--gold); font-weight:400; }
 .prologue-copy > p:not(.eyebrow) { max-width:590px; font-family:var(--serif); font-size:21px; line-height:1.6; opacity:.78; }

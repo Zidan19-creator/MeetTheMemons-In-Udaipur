@@ -54,7 +54,9 @@
     eventSections.forEach(section => eventObserver.observe(section));
   }
 
-  // Sufi section-only music: unlocked by the guest's first Enter tap.
+  // Sufi section-only music. The clip loops while this section is active.
+  // We prime audio on the visitor's first real interaction (including touch used to scroll),
+  // then the section observer controls the audible fade in/out.
   const sufiSection = document.getElementById('sufi');
   const sufiAudio = document.getElementById('sufiAudio');
   const enterCelebration = document.getElementById('enterCelebration');
@@ -76,10 +78,11 @@
     musicFadeFrame = requestAnimationFrame(step);
   };
 
-  const unlockSufiMusic = () => {
+  const primeSufiMusic = () => {
     if (!sufiAudio || musicUnlocked) return;
+    sufiAudio.loop = true;
     sufiAudio.volume = 0;
-    sufiAudio.currentTime = 0;
+
     const started = sufiAudio.play();
     if (started && typeof started.then === 'function') {
       started.then(() => {
@@ -88,25 +91,57 @@
           sufiAudio.currentTime = 0;
           fadeSufiAudio(.72, 1500);
         }
-      }).catch(() => {});
+      }).catch(() => {
+        // Some browsers block audible media until a qualifying user gesture.
+        // A later touch/click/keypress will try again automatically.
+      });
     } else {
       musicUnlocked = true;
     }
   };
 
-  if (enterCelebration) enterCelebration.addEventListener('click', unlockSufiMusic);
+  const startSufiSectionMusic = () => {
+    if (!sufiAudio) return;
+    sufiAudio.loop = true;
+    sufiAudio.currentTime = 0;
+
+    if (musicUnlocked) {
+      fadeSufiAudio(.72, 1500);
+      return;
+    }
+
+    // Try immediately when the guest scrolls into Sufi.
+    // If the browser blocks it, the first touch/click used while browsing will unlock it.
+    sufiAudio.volume = 0;
+    const started = sufiAudio.play();
+    if (started && typeof started.then === 'function') {
+      started.then(() => {
+        musicUnlocked = true;
+        fadeSufiAudio(.72, 1500);
+      }).catch(() => {});
+    } else {
+      musicUnlocked = true;
+      fadeSufiAudio(.72, 1500);
+    }
+  };
+
+  // Do not require the Enter button: any normal interaction can unlock the audio.
+  if (enterCelebration) enterCelebration.addEventListener('click', primeSufiMusic);
+  document.addEventListener('pointerdown', primeSufiMusic, { once: true, passive: true });
+  document.addEventListener('touchstart', primeSufiMusic, { once: true, passive: true });
+  document.addEventListener('keydown', primeSufiMusic, { once: true });
+  document.addEventListener('wheel', primeSufiMusic, { once: true, passive: true });
 
   if (sufiSection && sufiAudio && 'IntersectionObserver' in window) {
     const sufiMusicObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         const visible = entry.isIntersecting && entry.intersectionRatio >= .42;
+        const wasVisible = sufiInView;
         sufiInView = visible;
-        if (!musicUnlocked) return;
 
-        if (visible) {
-          sufiAudio.currentTime = 0;
-          fadeSufiAudio(.72, 1500);
-        } else {
+        if (visible && !wasVisible) {
+          startSufiSectionMusic();
+        } else if (!visible && wasVisible) {
           fadeSufiAudio(0, 1200);
         }
       });

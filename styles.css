@@ -251,3 +251,62 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     margin-bottom: 34px !important;
   }
 }
+
+
+/* Corrected Bismillah overlay v1 */
+.hero-bismillah {
+  position: absolute;
+  top: 82px;
+  left: 50%;
+  width: min(45vw, 430px);
+  transform: translateX(-50%);
+  z-index: 7;
+  pointer-events: none;
+  isolation: isolate;
+}
+.hero-bismillah::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -8px -16px;
+  background: rgba(195, 188, 180, .97);
+  border-radius: 999px;
+  filter: blur(5px);
+}
+.hero-bismillah img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: brightness(.72) sepia(.18);
+}
+.hero-bismillah::after {
+  content: "";
+  position: absolute;
+  top: -12%;
+  bottom: -12%;
+  right: -28%;
+  width: 24%;
+  background: linear-gradient(90deg, transparent, rgba(233, 191, 104, .72), transparent);
+  filter: blur(4px);
+  mix-blend-mode: screen;
+  transform: skewX(-16deg);
+  animation: bismillahRead 5.5s ease-in-out infinite;
+}
+@keyframes bismillahRead {
+  0%, 18% { right: -28%; opacity: 0; }
+  25% { opacity: .15; }
+  42% { opacity: .72; }
+  68% { right: 106%; opacity: 0; }
+  100% { right: 106%; opacity: 0; }
+}
+@media (max-width: 600px) {
+  .hero-bismillah {
+    top: 82px;
+    width: min(58vw, 330px);
+  }
+  .hero-bismillah::before {
+    inset: -6px -12px;
+    background: rgba(195, 188, 180, .98);
+    filter: blur(4px);
+  }
+}

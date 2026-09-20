@@ -54,6 +54,67 @@
     eventSections.forEach(section => eventObserver.observe(section));
   }
 
+  // Sufi section-only music: unlocked by the guest's first Enter tap.
+  const sufiSection = document.getElementById('sufi');
+  const sufiAudio = document.getElementById('sufiAudio');
+  const enterCelebration = document.getElementById('enterCelebration');
+  let sufiInView = false;
+  let musicUnlocked = false;
+  let musicFadeFrame = null;
+
+  const fadeSufiAudio = (targetVolume, duration = 1200) => {
+    if (!sufiAudio) return;
+    if (musicFadeFrame) cancelAnimationFrame(musicFadeFrame);
+    const from = sufiAudio.volume;
+    const started = performance.now();
+    const step = (now) => {
+      const p = Math.min(1, (now - started) / duration);
+      const eased = p * p * (3 - 2 * p);
+      sufiAudio.volume = Math.max(0, Math.min(1, from + (targetVolume - from) * eased));
+      if (p < 1) musicFadeFrame = requestAnimationFrame(step);
+    };
+    musicFadeFrame = requestAnimationFrame(step);
+  };
+
+  const unlockSufiMusic = () => {
+    if (!sufiAudio || musicUnlocked) return;
+    sufiAudio.volume = 0;
+    sufiAudio.currentTime = 0;
+    const started = sufiAudio.play();
+    if (started && typeof started.then === 'function') {
+      started.then(() => {
+        musicUnlocked = true;
+        if (sufiInView) {
+          sufiAudio.currentTime = 0;
+          fadeSufiAudio(.72, 1500);
+        }
+      }).catch(() => {});
+    } else {
+      musicUnlocked = true;
+    }
+  };
+
+  if (enterCelebration) enterCelebration.addEventListener('click', unlockSufiMusic);
+
+  if (sufiSection && sufiAudio && 'IntersectionObserver' in window) {
+    const sufiMusicObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        const visible = entry.isIntersecting && entry.intersectionRatio >= .42;
+        sufiInView = visible;
+        if (!musicUnlocked) return;
+
+        if (visible) {
+          sufiAudio.currentTime = 0;
+          fadeSufiAudio(.72, 1500);
+        } else {
+          fadeSufiAudio(0, 1200);
+        }
+      });
+    }, { threshold: [0, .42, .65] });
+
+    sufiMusicObserver.observe(sufiSection);
+  }
+
   // Countdown to start of first event in India Standard Time
   const target = new Date('2027-01-04T19:00:00+05:30').getTime();
   const parts = {
@@ -112,7 +173,8 @@
   });
 
   // Add full wedding weekend as an ICS file
-  document.getElementById('calendarButton').addEventListener('click', () => {
+  const calendarButton = document.getElementById('calendarButton');
+  if (calendarButton) calendarButton.addEventListener('click', () => {
     const ics = [
       'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Zaid & Fatima//Wedding Weekend//EN','CALSCALE:GREGORIAN',
       'BEGIN:VEVENT','UID:zf-udaipur-2027@meetthememons','DTSTAMP:20260919T000000Z',

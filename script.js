@@ -54,137 +54,96 @@
     eventSections.forEach(section => eventObserver.observe(section));
   }
 
-  // Strict Sufi-only music.
-  // No audio is primed or played anywhere outside the Sufi section.
+  // FINAL strict Sufi-only music controller.
+  // Rule: music may play ONLY when the exact center of the viewport is inside #sufi.
+  // The moment the center leaves #sufi, audio is stopped and reset.
   const sufiSection = document.getElementById('sufi');
   const sufiAudio = document.getElementById('sufiAudio');
-  let sufiActive = false;
-  let musicFadeFrame = null;
-  let scrollFrame = null;
-  let playAttemptPending = false;
+  let sufiPlaying = false;
+  let sufiRaf = 0;
 
-  const cancelSufiFade = () => {
-    if (musicFadeFrame) {
-      cancelAnimationFrame(musicFadeFrame);
-      musicFadeFrame = null;
-    }
-  };
-
-  const hardStopSufi = () => {
-    if (!sufiAudio) return;
-    cancelSufiFade();
-    sufiAudio.volume = 0;
-    sufiAudio.pause();
-    try { sufiAudio.currentTime = 0; } catch (_) {}
-  };
-
-  const fadeSufiIn = (duration = 1100) => {
-    if (!sufiAudio || !sufiActive) return;
-    cancelSufiFade();
-    const started = performance.now();
-    sufiAudio.volume = 0;
-
-    const step = (now) => {
-      if (!sufiActive || sufiAudio.paused) {
-        hardStopSufi();
-        return;
-      }
-      const p = Math.min(1, (now - started) / duration);
-      const eased = p * p * (3 - 2 * p);
-      sufiAudio.volume = Math.min(.72, .72 * eased);
-      if (p < 1) {
-        musicFadeFrame = requestAnimationFrame(step);
-      } else {
-        musicFadeFrame = null;
-      }
-    };
-
-    musicFadeFrame = requestAnimationFrame(step);
-  };
-
-  const startSufi = () => {
-    if (!sufiAudio || !sufiActive || playAttemptPending || !sufiAudio.paused) return;
-
-    sufiAudio.loop = true;
-    sufiAudio.volume = 0;
-    try { sufiAudio.currentTime = 0; } catch (_) {}
-
-    playAttemptPending = true;
-    const attempt = sufiAudio.play();
-
-    if (attempt && typeof attempt.then === 'function') {
-      attempt.then(() => {
-        playAttemptPending = false;
-        if (sufiActive) {
-          fadeSufiIn();
-        } else {
-          hardStopSufi();
-        }
-      }).catch(() => {
-        playAttemptPending = false;
-        hardStopSufi();
-      });
-    } else {
-      playAttemptPending = false;
-      if (sufiActive) fadeSufiIn();
-      else hardStopSufi();
-    }
-  };
-
-  const computeSufiActive = () => {
+  const centerIsInsideSufi = () => {
     if (!sufiSection) return false;
-    const rect = sufiSection.getBoundingClientRect();
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-
-    // The section must occupy the central 50% of the viewport.
-    // This prevents the song from starting while the timer/events intro is still on screen,
-    // and stops it before the next event takes over.
-    return rect.top <= vh * 0.25 && rect.bottom >= vh * 0.75;
+    const x = Math.max(1, Math.min(window.innerWidth - 1, window.innerWidth / 2));
+    const y = Math.max(1, Math.min(window.innerHeight - 1, window.innerHeight / 2));
+    const el = document.elementFromPoint(x, y);
+    return !!(el && el.closest && el.closest('#sufi') === sufiSection);
   };
 
-  const updateSufiZone = () => {
-    scrollFrame = null;
-    const activeNow = computeSufiActive();
+  const stopSufiNow = () => {
+    if (!sufiAudio) return;
+    sufiPlaying = false;
+    sufiAudio.pause();
+    sufiAudio.volume = 1;
+    try { sufiAudio.currentTime = 0; } catch (_) {}
+  };
 
-    if (!activeNow) {
-      sufiActive = false;
-      hardStopSufi();
+  const playSufiIfAllowed = () => {
+    if (!sufiAudio || !centerIsInsideSufi()) {
+      stopSufiNow();
       return;
     }
 
-    if (!sufiActive) {
-      sufiActive = true;
-      startSufi();
+    if (!sufiAudio.paused) {
+      sufiPlaying = true;
+      return;
+    }
+
+    sufiAudio.loop = true;
+    sufiAudio.volume = 1;
+    try { sufiAudio.currentTime = 0; } catch (_) {}
+
+    const attempt = sufiAudio.play();
+    if (attempt && typeof attempt.then === 'function') {
+      attempt.then(() => {
+        if (centerIsInsideSufi()) {
+          sufiPlaying = true;
+        } else {
+          stopSufiNow();
+        }
+      }).catch(() => {
+        sufiPlaying = false;
+      });
+    } else {
+      sufiPlaying = true;
     }
   };
 
-  const queueSufiZoneCheck = () => {
-    if (scrollFrame) return;
-    scrollFrame = requestAnimationFrame(updateSufiZone);
+  const enforceSufiZone = () => {
+    sufiRaf = 0;
+    if (centerIsInsideSufi()) {
+      playSufiIfAllowed();
+    } else {
+      stopSufiNow();
+    }
   };
 
-  // Never unlock/play the track outside Sufi.
-  // If a browser requires a user gesture, a touch/click while actually on Sufi will start it.
-  const trySufiFromGesture = () => {
-    updateSufiZone();
-    if (sufiActive) startSufi();
-    else hardStopSufi();
+  const queueSufiCheck = () => {
+    if (sufiRaf) return;
+    sufiRaf = requestAnimationFrame(enforceSufiZone);
   };
 
-  document.addEventListener('pointerdown', trySufiFromGesture, { passive: true });
-  document.addEventListener('touchstart', trySufiFromGesture, { passive: true });
-  document.addEventListener('keydown', trySufiFromGesture);
+  // Scrolling always enforces the stop boundary.
+  window.addEventListener('scroll', queueSufiCheck, { passive: true });
+  window.addEventListener('resize', queueSufiCheck, { passive: true });
 
-  window.addEventListener('scroll', queueSufiZoneCheck, { passive: true });
-  window.addEventListener('resize', queueSufiZoneCheck, { passive: true });
+  // These are real user gestures, so mobile Safari can start audio when the user
+  // actually reaches Sufi by scrolling. They do NOTHING outside the Sufi section.
+  document.addEventListener('touchmove', playSufiIfAllowed, { passive: true });
+  document.addEventListener('touchend', playSufiIfAllowed, { passive: true });
+  document.addEventListener('pointerup', playSufiIfAllowed, { passive: true });
+  document.addEventListener('wheel', playSufiIfAllowed, { passive: true });
+  document.addEventListener('click', playSufiIfAllowed, { passive: true });
+  document.addEventListener('keydown', playSufiIfAllowed);
+
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) hardStopSufi();
-    else updateSufiZone();
+    if (document.hidden) stopSufiNow();
+    else enforceSufiZone();
   });
-  window.addEventListener('pagehide', hardStopSufi);
+  window.addEventListener('pagehide', stopSufiNow);
 
-  hardStopSufi();
-  updateSufiZone();
+  stopSufiNow();
+  enforceSufiZone();
 
   // Countdown to start of first event in India Standard Time
   const target = new Date('2027-01-04T19:00:00+05:30').getTime();

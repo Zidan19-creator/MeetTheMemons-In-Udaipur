@@ -382,3 +382,32 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     padding-top: 58px;
   }
 }
+
+
+/* Keep the closing invitation and footer locked to the Reception wine palette */
+.finale {
+  background: #1c0911 !important;
+  color: #f2e5d8 !important;
+}
+
+.finale .eyebrow,
+.finale h2,
+.finale .finale-date,
+.finale .hashtag {
+  color: #f2e5d8;
+}
+
+.finale h2 em,
+.finale .finale-monogram {
+  color: #d4aa6d;
+}
+
+.footer {
+  background: #1c0911;
+  color: #f2e5d8;
+  border-top-color: rgba(242,229,216,.16);
+}
+
+.footer a {
+  color: #f2e5d8;
+}

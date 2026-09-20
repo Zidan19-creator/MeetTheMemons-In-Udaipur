@@ -251,3 +251,84 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     margin-bottom: 34px !important;
   }
 }
+
+
+/* Bismillah reader glow — final */
+.hero-bismillah {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  width: min(36vw, 360px);
+  transform: translateX(-50%);
+  z-index: 8;
+  pointer-events: none;
+}
+
+.hero-bismillah img {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: .96;
+  filter: brightness(.72) sepia(.12);
+}
+
+.hero-bismillah::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      transparent 41%,
+      rgba(201, 151, 61, .22) 46%,
+      rgba(255, 231, 164, .95) 50%,
+      rgba(201, 151, 61, .30) 54%,
+      transparent 60%,
+      transparent 100%
+    );
+  background-size: 260% 100%;
+  background-position: 140% 0;
+  -webkit-mask-image: url("assets/bismillah-correct.png?v=2");
+  mask-image: url("assets/bismillah-correct.png?v=2");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  animation: bismillahReaderGlow 6.2s ease-in-out infinite;
+}
+
+@keyframes bismillahReaderGlow {
+  0%, 22% {
+    background-position: 140% 0;
+    opacity: 0;
+  }
+  28% {
+    opacity: 1;
+  }
+  68% {
+    background-position: -40% 0;
+    opacity: 1;
+  }
+  74%, 100% {
+    background-position: -40% 0;
+    opacity: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-bismillah {
+    top: 78px;
+    width: min(48vw, 320px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-bismillah::after {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}

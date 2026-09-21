@@ -54,7 +54,7 @@
     eventSections.forEach(section => eventObserver.observe(section));
   }
 
-  // Wedding section music controller: Sufi -> Haldi -> Bollywood -> Carnival.
+  // Wedding section music controller: Sufi -> Haldi -> Bollywood -> Carnival -> Reception.
   const sufiSection = document.getElementById('sufi');
   const haldiSection = document.getElementById('haldi');
   const bollywoodSection = document.getElementById('bollywood');
@@ -65,6 +65,7 @@
   const haldiAudio = document.getElementById('haldiAudio');
   const bollywoodAudio = document.getElementById('bollywoodAudio');
   const carnivalAudio = document.getElementById('carnivalAudio');
+  const receptionAudio = document.getElementById('receptionAudio');
 
   const haldiStartMarker = haldiSection?.querySelector('.event-number') || haldiSection;
   const bollywoodStartMarker = bollywoodSection?.querySelector('.event-number') || bollywoodSection;
@@ -76,6 +77,7 @@
   let haldiFadeRaf = 0;
   let bollywoodFadeRaf = 0;
   let carnivalFadeRaf = 0;
+  let receptionFadeRaf = 0;
   let activeMusic = 'none';
 
   const viewportHeight = () =>
@@ -115,6 +117,10 @@
       cancelAnimationFrame(carnivalFadeRaf);
       carnivalFadeRaf = 0;
     }
+    if (which === 'reception' && receptionFadeRaf) {
+      cancelAnimationFrame(receptionFadeRaf);
+      receptionFadeRaf = 0;
+    }
   };
 
   const stopAndReset = (audio, which) => {
@@ -142,12 +148,14 @@
         if (which === 'sufi') sufiFadeRaf = id;
         else if (which === 'haldi') haldiFadeRaf = id;
         else if (which === 'bollywood') bollywoodFadeRaf = id;
-        else carnivalFadeRaf = id;
+        else if (which === 'carnival') carnivalFadeRaf = id;
+        else receptionFadeRaf = id;
       } else {
         if (which === 'sufi') sufiFadeRaf = 0;
         else if (which === 'haldi') haldiFadeRaf = 0;
         else if (which === 'bollywood') bollywoodFadeRaf = 0;
-        else carnivalFadeRaf = 0;
+        else if (which === 'carnival') carnivalFadeRaf = 0;
+        else receptionFadeRaf = 0;
         if (onDone) onDone();
       }
     };
@@ -156,7 +164,8 @@
     if (which === 'sufi') sufiFadeRaf = id;
     else if (which === 'haldi') haldiFadeRaf = id;
     else if (which === 'bollywood') bollywoodFadeRaf = id;
-    else carnivalFadeRaf = id;
+    else if (which === 'carnival') carnivalFadeRaf = id;
+    else receptionFadeRaf = id;
   };
 
   const ensurePlaying = (audio, startVolume = 0) => {
@@ -180,6 +189,8 @@
     stopAndReset(haldiAudio, 'haldi');
     stopAndReset(bollywoodAudio, 'bollywood');
     stopAndReset(carnivalAudio, 'carnival');
+    stopAndReset(receptionAudio, 'reception');
+    stopAndReset(receptionAudio, 'reception');
 
     const started = await ensurePlaying(sufiAudio, 1);
     if (!started || activeMusic !== 'sufi') return;
@@ -210,6 +221,7 @@
   const crossfadeToBollywood = async () => {
     activeMusic = 'bollywood';
     stopAndReset(carnivalAudio, 'carnival');
+    stopAndReset(receptionAudio, 'reception');
 
     if (haldiAudio && !haldiAudio.paused) {
       fadeTo(haldiAudio, 'haldi', 0, 1200, () => stopAndReset(haldiAudio, 'haldi'));
@@ -231,6 +243,7 @@
 
   const crossfadeToCarnival = async () => {
     activeMusic = 'carnival';
+    stopAndReset(receptionAudio, 'reception');
 
     if (bollywoodAudio && !bollywoodAudio.paused) {
       fadeTo(bollywoodAudio, 'bollywood', 0, 1200, () => stopAndReset(bollywoodAudio, 'bollywood'));
@@ -251,25 +264,34 @@
     fadeTo(carnivalAudio, 'carnival', .82, 1200);
   };
 
-  const leaveCarnival = () => {
-    if (activeMusic !== 'carnival') return;
-    activeMusic = 'none';
+  const crossfadeToReception = async () => {
+    activeMusic = 'reception';
 
     if (carnivalAudio && !carnivalAudio.paused) {
-      fadeTo(carnivalAudio, 'carnival', 0, 1000, () => stopAndReset(carnivalAudio, 'carnival'));
+      fadeTo(carnivalAudio, 'carnival', 0, 1200, () => stopAndReset(carnivalAudio, 'carnival'));
     } else {
       stopAndReset(carnivalAudio, 'carnival');
     }
+
+    stopAndReset(sufiAudio, 'sufi');
+    stopAndReset(haldiAudio, 'haldi');
+    stopAndReset(bollywoodAudio, 'bollywood');
+
+    if (!receptionAudio) return;
+    if (!receptionAudio.paused && receptionAudio.volume > 0) return;
+
+    const started = await ensurePlaying(receptionAudio, 0);
+    if (!started || activeMusic !== 'reception') return;
+
+    receptionAudio.loop = false;
+    fadeTo(receptionAudio, 'reception', .80, 1400);
   };
 
   const enforceMusicZone = () => {
     musicRaf = 0;
 
     if (receptionTransitionReached()) {
-      leaveCarnival();
-      stopAndReset(sufiAudio, 'sufi');
-      stopAndReset(haldiAudio, 'haldi');
-      stopAndReset(bollywoodAudio, 'bollywood');
+      if (activeMusic !== 'reception' || receptionAudio?.paused) crossfadeToReception();
       return;
     }
 
@@ -298,6 +320,7 @@
     stopAndReset(haldiAudio, 'haldi');
     stopAndReset(bollywoodAudio, 'bollywood');
     stopAndReset(carnivalAudio, 'carnival');
+    stopAndReset(receptionAudio, 'reception');
   };
 
   const queueMusicCheck = () => {
@@ -323,6 +346,7 @@
       stopAndReset(haldiAudio, 'haldi');
       stopAndReset(bollywoodAudio, 'bollywood');
       stopAndReset(carnivalAudio, 'carnival');
+      stopAndReset(receptionAudio, 'reception');
     } else {
       enforceMusicZone();
     }
@@ -333,6 +357,7 @@
     stopAndReset(haldiAudio, 'haldi');
     stopAndReset(bollywoodAudio, 'bollywood');
     stopAndReset(carnivalAudio, 'carnival');
+    stopAndReset(receptionAudio, 'reception');
   });
 
   enforceMusicZone();

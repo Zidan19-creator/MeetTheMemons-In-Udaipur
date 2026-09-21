@@ -54,20 +54,26 @@
     eventSections.forEach(section => eventObserver.observe(section));
   }
 
-  // Wedding section music controller: Sufi -> Haldi.
-  // The crossfade point is anchored to the Haldi date line so it matches
-  // the visual transition shown on mobile instead of fading too early.
+  // Wedding section music controller: Sufi -> Haldi -> Bollywood.
+  // Haldi transition stays at its approved position.
+  // Bollywood begins when its date line reaches the position shown in the user's screenshot.
   const sufiSection = document.getElementById('sufi');
   const haldiSection = document.getElementById('haldi');
   const bollywoodSection = document.getElementById('bollywood');
+  const carnivalSection = document.getElementById('carnival');
+
   const sufiAudio = document.getElementById('sufiAudio');
   const haldiAudio = document.getElementById('haldiAudio');
+  const bollywoodAudio = document.getElementById('bollywoodAudio');
+
   const haldiStartMarker = haldiSection?.querySelector('.event-number') || haldiSection;
   const bollywoodStartMarker = bollywoodSection?.querySelector('.event-number') || bollywoodSection;
+  const carnivalStartMarker = carnivalSection?.querySelector('.event-number') || carnivalSection;
 
   let musicRaf = 0;
   let sufiFadeRaf = 0;
   let haldiFadeRaf = 0;
+  let bollywoodFadeRaf = 0;
   let activeMusic = 'none';
 
   const viewportHeight = () =>
@@ -86,7 +92,8 @@
   };
 
   const haldiTransitionReached = () => markerReached(haldiStartMarker, .64);
-  const bollywoodTransitionReached = () => markerReached(bollywoodStartMarker, .64);
+  const bollywoodTransitionReached = () => markerReached(bollywoodStartMarker, .48);
+  const carnivalTransitionReached = () => markerReached(carnivalStartMarker, .64);
 
   const cancelFade = (which) => {
     if (which === 'sufi' && sufiFadeRaf) {
@@ -96,6 +103,10 @@
     if (which === 'haldi' && haldiFadeRaf) {
       cancelAnimationFrame(haldiFadeRaf);
       haldiFadeRaf = 0;
+    }
+    if (which === 'bollywood' && bollywoodFadeRaf) {
+      cancelAnimationFrame(bollywoodFadeRaf);
+      bollywoodFadeRaf = 0;
     }
   };
 
@@ -122,17 +133,20 @@
       if (p < 1) {
         const id = requestAnimationFrame(step);
         if (which === 'sufi') sufiFadeRaf = id;
-        else haldiFadeRaf = id;
+        else if (which === 'haldi') haldiFadeRaf = id;
+        else bollywoodFadeRaf = id;
       } else {
         if (which === 'sufi') sufiFadeRaf = 0;
-        else haldiFadeRaf = 0;
+        else if (which === 'haldi') haldiFadeRaf = 0;
+        else bollywoodFadeRaf = 0;
         if (onDone) onDone();
       }
     };
 
     const id = requestAnimationFrame(step);
     if (which === 'sufi') sufiFadeRaf = id;
-    else haldiFadeRaf = id;
+    else if (which === 'haldi') haldiFadeRaf = id;
+    else bollywoodFadeRaf = id;
   };
 
   const ensurePlaying = (audio, startVolume = 0) => {
@@ -154,6 +168,7 @@
 
     activeMusic = 'sufi';
     stopAndReset(haldiAudio, 'haldi');
+    stopAndReset(bollywoodAudio, 'bollywood');
 
     const started = await ensurePlaying(sufiAudio, 1);
     if (!started || activeMusic !== 'sufi') return;
@@ -164,6 +179,8 @@
 
   const crossfadeToHaldi = async () => {
     activeMusic = 'haldi';
+
+    stopAndReset(bollywoodAudio, 'bollywood');
 
     if (sufiAudio && !sufiAudio.paused) {
       fadeTo(sufiAudio, 'sufi', 0, 1200, () => stopAndReset(sufiAudio, 'sufi'));
@@ -179,39 +196,67 @@
     fadeTo(haldiAudio, 'haldi', .78, 1200);
   };
 
-  const leaveHaldi = () => {
-    if (activeMusic !== 'haldi') return;
-    activeMusic = 'none';
+  const crossfadeToBollywood = async () => {
+    activeMusic = 'bollywood';
 
     if (haldiAudio && !haldiAudio.paused) {
-      fadeTo(haldiAudio, 'haldi', 0, 1000, () => stopAndReset(haldiAudio, 'haldi'));
+      fadeTo(haldiAudio, 'haldi', 0, 1200, () => stopAndReset(haldiAudio, 'haldi'));
     } else {
       stopAndReset(haldiAudio, 'haldi');
+    }
+
+    stopAndReset(sufiAudio, 'sufi');
+
+    if (!bollywoodAudio) return;
+    if (!bollywoodAudio.paused && bollywoodAudio.volume > 0) return;
+
+    const started = await ensurePlaying(bollywoodAudio, 0);
+    if (!started || activeMusic !== 'bollywood') return;
+
+    bollywoodAudio.loop = false;
+    fadeTo(bollywoodAudio, 'bollywood', .82, 1200);
+  };
+
+  const leaveBollywood = () => {
+    if (activeMusic !== 'bollywood') return;
+    activeMusic = 'none';
+
+    if (bollywoodAudio && !bollywoodAudio.paused) {
+      fadeTo(bollywoodAudio, 'bollywood', 0, 1000, () => stopAndReset(bollywoodAudio, 'bollywood'));
+    } else {
+      stopAndReset(bollywoodAudio, 'bollywood');
     }
   };
 
   const enforceMusicZone = () => {
     musicRaf = 0;
 
-    if (haldiTransitionReached() && !bollywoodTransitionReached()) {
-      if (activeMusic !== 'haldi' || haldiAudio?.paused) crossfadeToHaldi();
-      return;
-    }
-
-    if (sufiHasBegun() && !haldiTransitionReached()) {
-      if (activeMusic !== 'sufi' || sufiAudio?.paused) enterSufi();
+    if (carnivalTransitionReached()) {
+      leaveBollywood();
+      stopAndReset(sufiAudio, 'sufi');
+      stopAndReset(haldiAudio, 'haldi');
       return;
     }
 
     if (bollywoodTransitionReached()) {
-      leaveHaldi();
-      stopAndReset(sufiAudio, 'sufi');
+      if (activeMusic !== 'bollywood' || bollywoodAudio?.paused) crossfadeToBollywood();
+      return;
+    }
+
+    if (haldiTransitionReached()) {
+      if (activeMusic !== 'haldi' || haldiAudio?.paused) crossfadeToHaldi();
+      return;
+    }
+
+    if (sufiHasBegun()) {
+      if (activeMusic !== 'sufi' || sufiAudio?.paused) enterSufi();
       return;
     }
 
     activeMusic = 'none';
     stopAndReset(sufiAudio, 'sufi');
     stopAndReset(haldiAudio, 'haldi');
+    stopAndReset(bollywoodAudio, 'bollywood');
   };
 
   const queueMusicCheck = () => {
@@ -235,6 +280,7 @@
       activeMusic = 'none';
       stopAndReset(sufiAudio, 'sufi');
       stopAndReset(haldiAudio, 'haldi');
+      stopAndReset(bollywoodAudio, 'bollywood');
     } else {
       enforceMusicZone();
     }
@@ -243,6 +289,7 @@
   window.addEventListener('pagehide', () => {
     stopAndReset(sufiAudio, 'sufi');
     stopAndReset(haldiAudio, 'haldi');
+    stopAndReset(bollywoodAudio, 'bollywood');
   });
 
   enforceMusicZone();

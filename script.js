@@ -55,16 +55,16 @@
   }
 
   // FINAL strict Sufi-only music controller.
-  // Music plays only while Sufi is the active section.
-  // As soon as the Haldi section begins to enter the lower part of the screen,
-  // the Sufi track fades out, then pauses and resets.
+  // The Sufi track may play only while Sufi owns the viewport.
+  // The instant ANY part of Haldi becomes visible, Sufi fades out and is locked off.
   const sufiSection = document.getElementById('sufi');
   const haldiSection = document.getElementById('haldi');
   const sufiAudio = document.getElementById('sufiAudio');
-  let sufiPlaying = false;
+
   let sufiRaf = 0;
   let sufiFadeRaf = 0;
   let sufiFadingOut = false;
+  let haldiVisible = false;
 
   const centerIsInsideSufi = () => {
     if (!sufiSection) return false;
@@ -74,18 +74,15 @@
     return !!(el && el.closest && el.closest('#sufi') === sufiSection);
   };
 
-  const haldiHasReachedFadePoint = () => {
+  const haldiIsOnScreenFallback = () => {
     if (!haldiSection) return false;
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-    const haldiTop = haldiSection.getBoundingClientRect().top;
-
-    // Fade exactly as the next section starts appearing near the bottom,
-    // matching the transition point shown in the mobile screenshot.
-    return haldiTop <= vh * 0.88;
+    const rect = haldiSection.getBoundingClientRect();
+    const vh = window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight;
+    return rect.top < vh && rect.bottom > 0;
   };
 
-  const inSufiPlaybackZone = () => {
-    return centerIsInsideSufi() && !haldiHasReachedFadePoint();
+  const sufiMayPlay = () => {
+    return centerIsInsideSufi() && !haldiVisible && !haldiIsOnScreenFallback();
   };
 
   const cancelSufiFade = () => {
@@ -99,44 +96,38 @@
   const stopSufiNow = () => {
     if (!sufiAudio) return;
     cancelSufiFade();
-    sufiPlaying = false;
     sufiAudio.pause();
     sufiAudio.volume = 1;
     try { sufiAudio.currentTime = 0; } catch (_) {}
   };
 
-  const fadeOutSufi = (duration = 1000) => {
-    if (!sufiAudio || sufiAudio.paused) {
+  const fadeOutSufi = (duration = 850) => {
+    if (!sufiAudio) return;
+
+    if (sufiAudio.paused) {
       stopSufiNow();
       return;
     }
+
     if (sufiFadingOut) return;
 
     cancelSufiFade();
     sufiFadingOut = true;
+
     const from = Math.max(0, Math.min(1, sufiAudio.volume));
     const started = performance.now();
 
     const step = (now) => {
-      // If the guest scrolls back into Sufi before the fade finishes,
-      // cancel the fade and restore normal playback.
-      if (!haldiHasReachedFadePoint() && centerIsInsideSufi()) {
-        sufiAudio.volume = 1;
-        sufiFadingOut = false;
-        sufiFadeRaf = 0;
-        return;
-      }
-
+      // Once Haldi is visible, NEVER cancel this fade because of touch/scroll events.
       const p = Math.min(1, (now - started) / duration);
       const eased = p * p * (3 - 2 * p);
       sufiAudio.volume = Math.max(0, from * (1 - eased));
 
-      if (p < 1) {
+      if (p < 1 && (haldiVisible || haldiIsOnScreenFallback())) {
         sufiFadeRaf = requestAnimationFrame(step);
       } else {
         sufiFadeRaf = 0;
         sufiFadingOut = false;
-        sufiPlaying = false;
         sufiAudio.pause();
         sufiAudio.volume = 1;
         try { sufiAudio.currentTime = 0; } catch (_) {}
@@ -149,7 +140,7 @@
   const playSufiIfAllowed = () => {
     if (!sufiAudio) return;
 
-    if (haldiHasReachedFadePoint()) {
+    if (haldiVisible || haldiIsOnScreenFallback()) {
       fadeOutSufi();
       return;
     }
@@ -163,7 +154,6 @@
 
     if (!sufiAudio.paused) {
       sufiAudio.volume = 1;
-      sufiPlaying = true;
       return;
     }
 
@@ -174,28 +164,26 @@
     const attempt = sufiAudio.play();
     if (attempt && typeof attempt.then === 'function') {
       attempt.then(() => {
-        if (inSufiPlaybackZone()) {
-          sufiPlaying = true;
+        if (sufiMayPlay()) {
           sufiAudio.volume = 1;
-        } else if (haldiHasReachedFadePoint()) {
+        } else if (haldiVisible || haldiIsOnScreenFallback()) {
           fadeOutSufi();
         } else {
           stopSufiNow();
         }
-      }).catch(() => {
-        sufiPlaying = false;
-      });
-    } else {
-      sufiPlaying = true;
+      }).catch(() => {});
     }
   };
 
   const enforceSufiZone = () => {
     sufiRaf = 0;
 
-    if (haldiHasReachedFadePoint()) {
+    if (haldiVisible || haldiIsOnScreenFallback()) {
       fadeOutSufi();
-    } else if (centerIsInsideSufi()) {
+      return;
+    }
+
+    if (centerIsInsideSufi()) {
       playSufiIfAllowed();
     } else {
       stopSufiNow();
@@ -207,11 +195,26 @@
     sufiRaf = requestAnimationFrame(enforceSufiZone);
   };
 
+  // This is the exact fade boundary: first visible pixel of Haldi.
+  if (haldiSection && 'IntersectionObserver' in window) {
+    const haldiObserver = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      haldiVisible = !!(entry && entry.isIntersecting);
+
+      if (haldiVisible) {
+        fadeOutSufi();
+      } else {
+        queueSufiCheck();
+      }
+    }, { threshold: 0.001 });
+
+    haldiObserver.observe(haldiSection);
+  }
+
   window.addEventListener('scroll', queueSufiCheck, { passive: true });
   window.addEventListener('resize', queueSufiCheck, { passive: true });
 
-  // Mobile Safari can use these real gestures to begin audio once Sufi is active.
-  // They still cannot start the track outside the strict Sufi playback zone.
+  // These gestures help mobile Safari start audio only while Sufi is truly active.
   document.addEventListener('touchmove', playSufiIfAllowed, { passive: true });
   document.addEventListener('touchend', playSufiIfAllowed, { passive: true });
   document.addEventListener('pointerup', playSufiIfAllowed, { passive: true });

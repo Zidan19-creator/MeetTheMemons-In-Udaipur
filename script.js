@@ -54,182 +54,198 @@
     eventSections.forEach(section => eventObserver.observe(section));
   }
 
-  // FINAL strict Sufi-only music controller.
-  // The Sufi track may play only while Sufi owns the viewport.
-  // The instant ANY part of Haldi becomes visible, Sufi fades out and is locked off.
+  // Wedding section music controller: Sufi -> Haldi.
+  // The crossfade point is anchored to the Haldi date line so it matches
+  // the visual transition shown on mobile instead of fading too early.
   const sufiSection = document.getElementById('sufi');
   const haldiSection = document.getElementById('haldi');
+  const bollywoodSection = document.getElementById('bollywood');
   const sufiAudio = document.getElementById('sufiAudio');
+  const haldiAudio = document.getElementById('haldiAudio');
+  const haldiStartMarker = haldiSection?.querySelector('.event-number') || haldiSection;
+  const bollywoodStartMarker = bollywoodSection?.querySelector('.event-number') || bollywoodSection;
 
-  let sufiRaf = 0;
+  let musicRaf = 0;
   let sufiFadeRaf = 0;
-  let sufiFadingOut = false;
-  let haldiVisible = false;
+  let haldiFadeRaf = 0;
+  let activeMusic = 'none';
 
-  const centerIsInsideSufi = () => {
+  const viewportHeight = () =>
+    window.visualViewport?.height ||
+    window.innerHeight ||
+    document.documentElement.clientHeight;
+
+  const markerReached = (marker, ratio = .64) => {
+    if (!marker) return false;
+    return marker.getBoundingClientRect().top <= viewportHeight() * ratio;
+  };
+
+  const sufiHasBegun = () => {
     if (!sufiSection) return false;
-    const x = Math.max(1, Math.min(window.innerWidth - 1, window.innerWidth / 2));
-    const y = Math.max(1, Math.min(window.innerHeight - 1, window.innerHeight / 2));
-    const el = document.elementFromPoint(x, y);
-    return !!(el && el.closest && el.closest('#sufi') === sufiSection);
+    return sufiSection.getBoundingClientRect().top <= viewportHeight() * .5;
   };
 
-  const haldiIsOnScreenFallback = () => {
-    if (!haldiSection) return false;
-    const rect = haldiSection.getBoundingClientRect();
-    const vh = window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight;
-    return rect.top < vh && rect.bottom > 0;
-  };
+  const haldiTransitionReached = () => markerReached(haldiStartMarker, .64);
+  const bollywoodTransitionReached = () => markerReached(bollywoodStartMarker, .64);
 
-  const sufiMayPlay = () => {
-    return centerIsInsideSufi() && !haldiVisible && !haldiIsOnScreenFallback();
-  };
-
-  const cancelSufiFade = () => {
-    if (sufiFadeRaf) {
+  const cancelFade = (which) => {
+    if (which === 'sufi' && sufiFadeRaf) {
       cancelAnimationFrame(sufiFadeRaf);
       sufiFadeRaf = 0;
     }
-    sufiFadingOut = false;
-  };
-
-  const stopSufiNow = () => {
-    if (!sufiAudio) return;
-    cancelSufiFade();
-    sufiAudio.pause();
-    sufiAudio.volume = 1;
-    try { sufiAudio.currentTime = 0; } catch (_) {}
-  };
-
-  const fadeOutSufi = (duration = 850) => {
-    if (!sufiAudio) return;
-
-    if (sufiAudio.paused) {
-      stopSufiNow();
-      return;
+    if (which === 'haldi' && haldiFadeRaf) {
+      cancelAnimationFrame(haldiFadeRaf);
+      haldiFadeRaf = 0;
     }
+  };
 
-    if (sufiFadingOut) return;
+  const stopAndReset = (audio, which) => {
+    if (!audio) return;
+    cancelFade(which);
+    audio.pause();
+    audio.volume = 1;
+    try { audio.currentTime = 0; } catch (_) {}
+  };
 
-    cancelSufiFade();
-    sufiFadingOut = true;
+  const fadeTo = (audio, which, target, duration, onDone) => {
+    if (!audio) return;
+    cancelFade(which);
 
-    const from = Math.max(0, Math.min(1, sufiAudio.volume));
+    const from = Math.max(0, Math.min(1, audio.volume));
     const started = performance.now();
 
     const step = (now) => {
-      // Once Haldi is visible, NEVER cancel this fade because of touch/scroll events.
       const p = Math.min(1, (now - started) / duration);
       const eased = p * p * (3 - 2 * p);
-      sufiAudio.volume = Math.max(0, from * (1 - eased));
+      audio.volume = Math.max(0, Math.min(1, from + (target - from) * eased));
 
-      if (p < 1 && (haldiVisible || haldiIsOnScreenFallback())) {
-        sufiFadeRaf = requestAnimationFrame(step);
+      if (p < 1) {
+        const id = requestAnimationFrame(step);
+        if (which === 'sufi') sufiFadeRaf = id;
+        else haldiFadeRaf = id;
       } else {
-        sufiFadeRaf = 0;
-        sufiFadingOut = false;
-        sufiAudio.pause();
-        sufiAudio.volume = 1;
-        try { sufiAudio.currentTime = 0; } catch (_) {}
+        if (which === 'sufi') sufiFadeRaf = 0;
+        else haldiFadeRaf = 0;
+        if (onDone) onDone();
       }
     };
 
-    sufiFadeRaf = requestAnimationFrame(step);
+    const id = requestAnimationFrame(step);
+    if (which === 'sufi') sufiFadeRaf = id;
+    else haldiFadeRaf = id;
   };
 
-  const playSufiIfAllowed = () => {
+  const ensurePlaying = (audio, startVolume = 0) => {
+    if (!audio) return Promise.resolve(false);
+    if (!audio.paused) return Promise.resolve(true);
+
+    audio.volume = startVolume;
+    try { audio.currentTime = 0; } catch (_) {}
+
+    const attempt = audio.play();
+    if (attempt && typeof attempt.then === 'function') {
+      return attempt.then(() => true).catch(() => false);
+    }
+    return Promise.resolve(true);
+  };
+
+  const enterSufi = async () => {
     if (!sufiAudio) return;
 
-    if (haldiVisible || haldiIsOnScreenFallback()) {
-      fadeOutSufi();
-      return;
-    }
+    activeMusic = 'sufi';
+    stopAndReset(haldiAudio, 'haldi');
 
-    if (!centerIsInsideSufi()) {
-      stopSufiNow();
-      return;
-    }
-
-    cancelSufiFade();
-
-    if (!sufiAudio.paused) {
-      sufiAudio.volume = 1;
-      return;
-    }
+    const started = await ensurePlaying(sufiAudio, 1);
+    if (!started || activeMusic !== 'sufi') return;
 
     sufiAudio.loop = true;
     sufiAudio.volume = 1;
-    try { sufiAudio.currentTime = 0; } catch (_) {}
+  };
 
-    const attempt = sufiAudio.play();
-    if (attempt && typeof attempt.then === 'function') {
-      attempt.then(() => {
-        if (sufiMayPlay()) {
-          sufiAudio.volume = 1;
-        } else if (haldiVisible || haldiIsOnScreenFallback()) {
-          fadeOutSufi();
-        } else {
-          stopSufiNow();
-        }
-      }).catch(() => {});
+  const crossfadeToHaldi = async () => {
+    activeMusic = 'haldi';
+
+    if (sufiAudio && !sufiAudio.paused) {
+      fadeTo(sufiAudio, 'sufi', 0, 1200, () => stopAndReset(sufiAudio, 'sufi'));
+    }
+
+    if (!haldiAudio) return;
+    if (!haldiAudio.paused && haldiAudio.volume > 0) return;
+
+    const started = await ensurePlaying(haldiAudio, 0);
+    if (!started || activeMusic !== 'haldi') return;
+
+    haldiAudio.loop = false;
+    fadeTo(haldiAudio, 'haldi', .78, 1200);
+  };
+
+  const leaveHaldi = () => {
+    if (activeMusic !== 'haldi') return;
+    activeMusic = 'none';
+
+    if (haldiAudio && !haldiAudio.paused) {
+      fadeTo(haldiAudio, 'haldi', 0, 1000, () => stopAndReset(haldiAudio, 'haldi'));
+    } else {
+      stopAndReset(haldiAudio, 'haldi');
     }
   };
 
-  const enforceSufiZone = () => {
-    sufiRaf = 0;
+  const enforceMusicZone = () => {
+    musicRaf = 0;
 
-    if (haldiVisible || haldiIsOnScreenFallback()) {
-      fadeOutSufi();
+    if (haldiTransitionReached() && !bollywoodTransitionReached()) {
+      if (activeMusic !== 'haldi' || haldiAudio?.paused) crossfadeToHaldi();
       return;
     }
 
-    if (centerIsInsideSufi()) {
-      playSufiIfAllowed();
-    } else {
-      stopSufiNow();
+    if (sufiHasBegun() && !haldiTransitionReached()) {
+      if (activeMusic !== 'sufi' || sufiAudio?.paused) enterSufi();
+      return;
     }
+
+    if (bollywoodTransitionReached()) {
+      leaveHaldi();
+      stopAndReset(sufiAudio, 'sufi');
+      return;
+    }
+
+    activeMusic = 'none';
+    stopAndReset(sufiAudio, 'sufi');
+    stopAndReset(haldiAudio, 'haldi');
   };
 
-  const queueSufiCheck = () => {
-    if (sufiRaf) return;
-    sufiRaf = requestAnimationFrame(enforceSufiZone);
+  const queueMusicCheck = () => {
+    if (musicRaf) return;
+    musicRaf = requestAnimationFrame(enforceMusicZone);
   };
 
-  // This is the exact fade boundary: first visible pixel of Haldi.
-  if (haldiSection && 'IntersectionObserver' in window) {
-    const haldiObserver = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      haldiVisible = !!(entry && entry.isIntersecting);
+  window.addEventListener('scroll', queueMusicCheck, { passive: true });
+  window.addEventListener('resize', queueMusicCheck, { passive: true });
 
-      if (haldiVisible) {
-        fadeOutSufi();
-      } else {
-        queueSufiCheck();
-      }
-    }, { threshold: 0.001 });
-
-    haldiObserver.observe(haldiSection);
-  }
-
-  window.addEventListener('scroll', queueSufiCheck, { passive: true });
-  window.addEventListener('resize', queueSufiCheck, { passive: true });
-
-  // These gestures help mobile Safari start audio only while Sufi is truly active.
-  document.addEventListener('touchmove', playSufiIfAllowed, { passive: true });
-  document.addEventListener('touchend', playSufiIfAllowed, { passive: true });
-  document.addEventListener('pointerup', playSufiIfAllowed, { passive: true });
-  document.addEventListener('wheel', playSufiIfAllowed, { passive: true });
-  document.addEventListener('click', playSufiIfAllowed, { passive: true });
-  document.addEventListener('keydown', playSufiIfAllowed);
+  const gestureMusicCheck = () => enforceMusicZone();
+  document.addEventListener('touchmove', gestureMusicCheck, { passive: true });
+  document.addEventListener('touchend', gestureMusicCheck, { passive: true });
+  document.addEventListener('pointerup', gestureMusicCheck, { passive: true });
+  document.addEventListener('wheel', gestureMusicCheck, { passive: true });
+  document.addEventListener('click', gestureMusicCheck, { passive: true });
+  document.addEventListener('keydown', gestureMusicCheck);
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stopSufiNow();
-    else enforceSufiZone();
+    if (document.hidden) {
+      activeMusic = 'none';
+      stopAndReset(sufiAudio, 'sufi');
+      stopAndReset(haldiAudio, 'haldi');
+    } else {
+      enforceMusicZone();
+    }
   });
-  window.addEventListener('pagehide', stopSufiNow);
 
-  stopSufiNow();
-  enforceSufiZone();
+  window.addEventListener('pagehide', () => {
+    stopAndReset(sufiAudio, 'sufi');
+    stopAndReset(haldiAudio, 'haldi');
+  });
+
+  enforceMusicZone();
 
   // Countdown to start of first event in India Standard Time
   const target = new Date('2027-01-04T19:00:00+05:30').getTime();

@@ -54,26 +54,28 @@
     eventSections.forEach(section => eventObserver.observe(section));
   }
 
-  // Wedding section music controller: Sufi -> Haldi -> Bollywood.
-  // Haldi transition stays at its approved position.
-  // Bollywood begins when its date line reaches the position shown in the user's screenshot.
+  // Wedding section music controller: Sufi -> Haldi -> Bollywood -> Carnival.
   const sufiSection = document.getElementById('sufi');
   const haldiSection = document.getElementById('haldi');
   const bollywoodSection = document.getElementById('bollywood');
   const carnivalSection = document.getElementById('carnival');
+  const receptionSection = document.getElementById('reception');
 
   const sufiAudio = document.getElementById('sufiAudio');
   const haldiAudio = document.getElementById('haldiAudio');
   const bollywoodAudio = document.getElementById('bollywoodAudio');
+  const carnivalAudio = document.getElementById('carnivalAudio');
 
   const haldiStartMarker = haldiSection?.querySelector('.event-number') || haldiSection;
   const bollywoodStartMarker = bollywoodSection?.querySelector('.event-number') || bollywoodSection;
   const carnivalStartMarker = carnivalSection?.querySelector('.event-number') || carnivalSection;
+  const receptionStartMarker = receptionSection?.querySelector('.event-number') || receptionSection;
 
   let musicRaf = 0;
   let sufiFadeRaf = 0;
   let haldiFadeRaf = 0;
   let bollywoodFadeRaf = 0;
+  let carnivalFadeRaf = 0;
   let activeMusic = 'none';
 
   const viewportHeight = () =>
@@ -94,6 +96,7 @@
   const haldiTransitionReached = () => markerReached(haldiStartMarker, .64);
   const bollywoodTransitionReached = () => markerReached(bollywoodStartMarker, .48);
   const carnivalTransitionReached = () => markerReached(carnivalStartMarker, .64);
+  const receptionTransitionReached = () => markerReached(receptionStartMarker, .64);
 
   const cancelFade = (which) => {
     if (which === 'sufi' && sufiFadeRaf) {
@@ -107,6 +110,10 @@
     if (which === 'bollywood' && bollywoodFadeRaf) {
       cancelAnimationFrame(bollywoodFadeRaf);
       bollywoodFadeRaf = 0;
+    }
+    if (which === 'carnival' && carnivalFadeRaf) {
+      cancelAnimationFrame(carnivalFadeRaf);
+      carnivalFadeRaf = 0;
     }
   };
 
@@ -134,11 +141,13 @@
         const id = requestAnimationFrame(step);
         if (which === 'sufi') sufiFadeRaf = id;
         else if (which === 'haldi') haldiFadeRaf = id;
-        else bollywoodFadeRaf = id;
+        else if (which === 'bollywood') bollywoodFadeRaf = id;
+        else carnivalFadeRaf = id;
       } else {
         if (which === 'sufi') sufiFadeRaf = 0;
         else if (which === 'haldi') haldiFadeRaf = 0;
-        else bollywoodFadeRaf = 0;
+        else if (which === 'bollywood') bollywoodFadeRaf = 0;
+        else carnivalFadeRaf = 0;
         if (onDone) onDone();
       }
     };
@@ -146,7 +155,8 @@
     const id = requestAnimationFrame(step);
     if (which === 'sufi') sufiFadeRaf = id;
     else if (which === 'haldi') haldiFadeRaf = id;
-    else bollywoodFadeRaf = id;
+    else if (which === 'bollywood') bollywoodFadeRaf = id;
+    else carnivalFadeRaf = id;
   };
 
   const ensurePlaying = (audio, startVolume = 0) => {
@@ -169,6 +179,7 @@
     activeMusic = 'sufi';
     stopAndReset(haldiAudio, 'haldi');
     stopAndReset(bollywoodAudio, 'bollywood');
+    stopAndReset(carnivalAudio, 'carnival');
 
     const started = await ensurePlaying(sufiAudio, 1);
     if (!started || activeMusic !== 'sufi') return;
@@ -179,8 +190,8 @@
 
   const crossfadeToHaldi = async () => {
     activeMusic = 'haldi';
-
     stopAndReset(bollywoodAudio, 'bollywood');
+    stopAndReset(carnivalAudio, 'carnival');
 
     if (sufiAudio && !sufiAudio.paused) {
       fadeTo(sufiAudio, 'sufi', 0, 1200, () => stopAndReset(sufiAudio, 'sufi'));
@@ -198,6 +209,7 @@
 
   const crossfadeToBollywood = async () => {
     activeMusic = 'bollywood';
+    stopAndReset(carnivalAudio, 'carnival');
 
     if (haldiAudio && !haldiAudio.paused) {
       fadeTo(haldiAudio, 'haldi', 0, 1200, () => stopAndReset(haldiAudio, 'haldi'));
@@ -217,24 +229,52 @@
     fadeTo(bollywoodAudio, 'bollywood', .82, 1200);
   };
 
-  const leaveBollywood = () => {
-    if (activeMusic !== 'bollywood') return;
-    activeMusic = 'none';
+  const crossfadeToCarnival = async () => {
+    activeMusic = 'carnival';
 
     if (bollywoodAudio && !bollywoodAudio.paused) {
-      fadeTo(bollywoodAudio, 'bollywood', 0, 1000, () => stopAndReset(bollywoodAudio, 'bollywood'));
+      fadeTo(bollywoodAudio, 'bollywood', 0, 1200, () => stopAndReset(bollywoodAudio, 'bollywood'));
     } else {
       stopAndReset(bollywoodAudio, 'bollywood');
+    }
+
+    stopAndReset(sufiAudio, 'sufi');
+    stopAndReset(haldiAudio, 'haldi');
+
+    if (!carnivalAudio) return;
+    if (!carnivalAudio.paused && carnivalAudio.volume > 0) return;
+
+    const started = await ensurePlaying(carnivalAudio, 0);
+    if (!started || activeMusic !== 'carnival') return;
+
+    carnivalAudio.loop = false;
+    fadeTo(carnivalAudio, 'carnival', .82, 1200);
+  };
+
+  const leaveCarnival = () => {
+    if (activeMusic !== 'carnival') return;
+    activeMusic = 'none';
+
+    if (carnivalAudio && !carnivalAudio.paused) {
+      fadeTo(carnivalAudio, 'carnival', 0, 1000, () => stopAndReset(carnivalAudio, 'carnival'));
+    } else {
+      stopAndReset(carnivalAudio, 'carnival');
     }
   };
 
   const enforceMusicZone = () => {
     musicRaf = 0;
 
-    if (carnivalTransitionReached()) {
-      leaveBollywood();
+    if (receptionTransitionReached()) {
+      leaveCarnival();
       stopAndReset(sufiAudio, 'sufi');
       stopAndReset(haldiAudio, 'haldi');
+      stopAndReset(bollywoodAudio, 'bollywood');
+      return;
+    }
+
+    if (carnivalTransitionReached()) {
+      if (activeMusic !== 'carnival' || carnivalAudio?.paused) crossfadeToCarnival();
       return;
     }
 
@@ -257,6 +297,7 @@
     stopAndReset(sufiAudio, 'sufi');
     stopAndReset(haldiAudio, 'haldi');
     stopAndReset(bollywoodAudio, 'bollywood');
+    stopAndReset(carnivalAudio, 'carnival');
   };
 
   const queueMusicCheck = () => {
@@ -281,6 +322,7 @@
       stopAndReset(sufiAudio, 'sufi');
       stopAndReset(haldiAudio, 'haldi');
       stopAndReset(bollywoodAudio, 'bollywood');
+      stopAndReset(carnivalAudio, 'carnival');
     } else {
       enforceMusicZone();
     }
@@ -290,6 +332,7 @@
     stopAndReset(sufiAudio, 'sufi');
     stopAndReset(haldiAudio, 'haldi');
     stopAndReset(bollywoodAudio, 'bollywood');
+    stopAndReset(carnivalAudio, 'carnival');
   });
 
   enforceMusicZone();

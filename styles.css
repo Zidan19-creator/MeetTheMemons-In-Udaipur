@@ -941,3 +941,11 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
 .travel-palace {
   display: none !important;
 }
+
+
+/* Final clean Udaipur asset */
+.travel-editorial .travel-bg img,
+.travel-frame img {
+  image-rendering: auto;
+  object-fit: cover;
+}

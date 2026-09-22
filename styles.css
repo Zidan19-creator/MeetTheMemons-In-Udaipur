@@ -451,3 +451,43 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     line-height: 1.28;
   }
 }
+
+
+/* Finale hosts invitation */
+.finale-hosts {
+  margin: 22px auto 0;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: clamp(15px, 1.6vw, 20px);
+  line-height: 1.35;
+  color: #f2e5d8;
+  letter-spacing: .01em;
+}
+
+.finale-hosts span:first-child {
+  font-style: italic;
+  opacity: .78;
+}
+
+.finale-hosts strong {
+  color: #d4aa6d;
+  font-weight: 500;
+  font-size: 1.08em;
+}
+
+.finale-hosts span:last-child {
+  opacity: .92;
+}
+
+@media (max-width: 600px) {
+  .finale-hosts {
+    margin-top: 18px;
+    max-width: 300px;
+    font-size: 15px;
+  }
+}

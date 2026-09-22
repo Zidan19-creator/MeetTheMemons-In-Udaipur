@@ -1450,3 +1450,15 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     transform: translateY(-85px) !important;
   }
 }
+/* Hide the extra ZF baked into the Udaipur image */
+.travel-editorial .travel-bg img {
+  transform: scale(1.18) !important;
+  object-position: center 56% !important;
+}
+
+@media (max-width: 860px) {
+  .travel-editorial .travel-bg img {
+    transform: scale(1.22) !important;
+    object-position: center 54% !important;
+  }
+}

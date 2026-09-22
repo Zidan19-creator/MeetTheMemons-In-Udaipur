@@ -1225,3 +1225,15 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     max-width: 320px;
   }
 }
+
+
+/* Nudge Udaipur copy block slightly upward */
+.travel-copy {
+  transform: translateY(-34px);
+}
+
+@media (max-width: 860px) {
+  .travel-copy {
+    transform: translateY(-28px);
+  }
+}

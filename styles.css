@@ -698,3 +698,226 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     transform: translateY(8px);
   }
 }
+
+
+/* Udaipur editorial destination — replaces old promo-style travel card */
+.travel.travel-editorial {
+  min-height: 980px;
+  padding: 110px 7vw 120px;
+  position: relative;
+  overflow: hidden;
+  display: block;
+  color: #f6efe7;
+  background: #1b2227;
+}
+
+.travel-editorial .travel-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.travel-editorial .travel-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(13,18,22,.78) 0%, rgba(13,18,22,.48) 38%, rgba(13,18,22,.18) 68%, rgba(13,18,22,.38) 100%),
+    linear-gradient(180deg, rgba(10,15,19,.08), rgba(10,15,19,.38));
+}
+
+.travel-editorial .travel-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 46%;
+  filter: saturate(.72) brightness(.68) contrast(1.04);
+  transform: scale(1.08);
+}
+
+.travel-editorial::after {
+  content: "";
+  position: absolute;
+  inset: auto -8vw -22vw auto;
+  width: 48vw;
+  height: 48vw;
+  border-radius: 50%;
+  border: 1px solid rgba(239,214,178,.14);
+  pointer-events: none;
+}
+
+.travel-editorial-inner {
+  position: relative;
+  z-index: 2;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(280px, .82fr) minmax(390px, 1.05fr);
+  align-items: center;
+  gap: 8vw;
+}
+
+.travel-copy {
+  align-self: center;
+  max-width: 520px;
+}
+
+.travel-copy .eyebrow {
+  color: rgba(246,239,231,.72);
+  margin-bottom: 22px;
+}
+
+.travel-copy h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(58px, 7.4vw, 108px);
+  line-height: .88;
+  letter-spacing: -.055em;
+  text-shadow: 0 10px 30px rgba(0,0,0,.16);
+}
+
+.travel-copy h2 em {
+  display: inline-block;
+  color: #e9c995;
+  font-weight: 400;
+}
+
+.travel-copy > p:not(.eyebrow) {
+  max-width: 440px;
+  margin-top: 30px;
+  font-family: var(--serif);
+  font-size: clamp(18px, 1.6vw, 22px);
+  line-height: 1.55;
+  color: rgba(246,239,231,.82);
+}
+
+.travel-visual {
+  position: relative;
+  min-height: 700px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.travel-frame {
+  width: min(420px, 34vw);
+  margin: 0;
+  position: relative;
+  z-index: 2;
+  border: 1px solid rgba(239,214,178,.34);
+  background: rgba(255,255,255,.04);
+  box-shadow: 0 38px 90px rgba(0,0,0,.34);
+  overflow: hidden;
+}
+
+.travel-frame::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border: 1px solid rgba(255,255,255,.18);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.travel-frame img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4.72;
+  object-fit: cover;
+  object-position: center;
+}
+
+.travel-palace {
+  position: absolute;
+  z-index: 3;
+  width: 230px;
+  height: 168px;
+  margin: 0;
+  right: -26px;
+  bottom: 54px;
+  overflow: hidden;
+  border: 10px solid rgba(239,230,217,.94);
+  box-shadow: 0 22px 55px rgba(0,0,0,.3);
+  transform: rotate(2deg);
+  background: #e9e0d4;
+}
+
+.travel-palace img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 58% 82%;
+  transform: scale(1.72);
+}
+
+.travel-caption {
+  position: absolute;
+  left: 0;
+  bottom: 24px;
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16px;
+  letter-spacing: .01em;
+  color: rgba(246,239,231,.72);
+}
+
+@media (max-width: 860px) {
+  .travel.travel-editorial {
+    min-height: 1080px;
+    padding: 96px 22px 110px;
+  }
+
+  .travel-editorial .travel-bg img {
+    object-position: 52% center;
+    transform: scale(1.14);
+  }
+
+  .travel-editorial .travel-bg::after {
+    background:
+      linear-gradient(180deg, rgba(12,17,20,.64) 0%, rgba(12,17,20,.28) 36%, rgba(12,17,20,.5) 100%);
+  }
+
+  .travel-editorial-inner {
+    grid-template-columns: 1fr;
+    gap: 56px;
+  }
+
+  .travel-copy {
+    max-width: 330px;
+  }
+
+  .travel-copy h2 {
+    font-size: clamp(52px, 15vw, 76px);
+  }
+
+  .travel-copy > p:not(.eyebrow) {
+    font-size: 18px;
+    max-width: 300px;
+    margin-top: 22px;
+  }
+
+  .travel-visual {
+    min-height: 610px;
+    justify-content: center;
+  }
+
+  .travel-frame {
+    width: min(78vw, 360px);
+  }
+
+  .travel-palace {
+    width: 180px;
+    height: 132px;
+    right: -4px;
+    bottom: 28px;
+    border-width: 8px;
+  }
+
+  .travel-caption {
+    left: 4px;
+    bottom: -6px;
+    font-size: 14px;
+  }
+}

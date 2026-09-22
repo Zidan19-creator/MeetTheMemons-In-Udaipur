@@ -1278,3 +1278,121 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     transform: translateY(55px);
   }
 }
+
+
+/* Udaipur correction — restore lower detail and remove dull treatment */
+.travel.travel-editorial {
+  min-height: 900px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.travel-editorial .travel-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 62%;
+  transform: none !important;
+  filter: saturate(1.18) brightness(1.05) contrast(1.02) !important;
+}
+
+.travel-editorial .travel-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(8,12,15,.34) 0%,
+    rgba(8,12,15,.18) 30%,
+    rgba(8,12,15,.03) 62%,
+    rgba(8,12,15,0) 100%
+  ) !important;
+}
+
+.travel-detail {
+  display: block !important;
+  position: absolute !important;
+  z-index: 4;
+  right: 6vw;
+  bottom: 34px;
+  width: min(300px, 26vw);
+  margin: 0 !important;
+  transform: none !important;
+}
+
+.travel-detail-window {
+  display: block !important;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.28 / 1;
+  overflow: hidden;
+  border: 8px solid rgba(247,240,229,.94);
+  background: #ede3d5;
+  box-shadow: 0 22px 55px rgba(0,0,0,.28);
+}
+
+.travel-detail-window img {
+  display: block !important;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 58% 82%;
+  transform: scale(1.28);
+}
+
+.travel-detail-window::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(255,255,255,.34);
+  pointer-events: none;
+}
+
+.travel-detail span {
+  display: block !important;
+  margin-top: 9px;
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  font-size: 9px;
+  color: rgba(248,241,231,.86);
+}
+
+@media (max-width: 860px) {
+  .travel.travel-editorial {
+    min-height: 940px !important;
+  }
+
+  .travel-editorial .travel-bg img {
+    object-position: 52% 62%;
+    filter: saturate(1.2) brightness(1.08) contrast(1.01) !important;
+  }
+
+  .travel-editorial .travel-bg::after {
+    background: linear-gradient(
+      180deg,
+      rgba(8,12,15,.28) 0%,
+      rgba(8,12,15,.12) 34%,
+      rgba(8,12,15,.02) 66%,
+      rgba(8,12,15,.10) 100%
+    ) !important;
+  }
+
+  .travel-detail {
+    display: block !important;
+    right: 20px;
+    bottom: 26px;
+    width: min(210px, 56vw);
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  .travel-detail-window {
+    border-width: 7px;
+  }
+
+  .travel-detail span {
+    font-size: 8px;
+    margin-top: 8px;
+  }
+}

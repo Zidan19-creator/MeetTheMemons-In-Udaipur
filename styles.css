@@ -502,3 +502,141 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     line-height: 1.26;
   }
 }
+
+
+/* Finale composition lock — center every element inside the decorative circles */
+.finale {
+  min-height: 860px;
+  padding: 110px 24px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.finale::before,
+.finale::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.finale::before {
+  width: min(900px, 92vw);
+  aspect-ratio: 1;
+  height: auto;
+  border: 1px solid rgba(214,169,102,.22);
+}
+
+.finale::after {
+  width: min(610px, 68vw);
+  aspect-ratio: 1;
+  height: auto;
+  border: 1px solid rgba(214,169,102,.18);
+}
+
+.finale-inner {
+  position: relative;
+  z-index: 2;
+  width: min(700px, 82vw);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.finale .eyebrow {
+  margin: 0 0 20px;
+}
+
+.finale h2 {
+  margin: 0;
+}
+
+.finale-date {
+  margin: 24px 0 0;
+}
+
+.finale-hosts {
+  margin: 14px auto 0;
+}
+
+.finale-monogram {
+  margin-top: 24px;
+  font-size: 104px;
+}
+
+.finale .hashtag {
+  margin: 8px 0 0;
+}
+
+.creator-signature {
+  margin: 12px auto 0;
+}
+
+@media (max-width: 600px) {
+  .finale {
+    min-height: 760px;
+    padding: 72px 18px;
+  }
+
+  .finale::before {
+    width: 720px;
+  }
+
+  .finale::after {
+    width: 510px;
+  }
+
+  .finale-inner {
+    width: min(320px, 84vw);
+  }
+
+  .finale .eyebrow {
+    margin-bottom: 14px;
+  }
+
+  .finale h2 {
+    font-size: 42px;
+    line-height: .94;
+    letter-spacing: -.045em;
+  }
+
+  .finale-date {
+    margin-top: 18px;
+    font-size: 9px;
+    letter-spacing: .17em;
+  }
+
+  .finale-hosts {
+    margin-top: 10px;
+    width: min(245px, 70vw);
+    font-size: 13px;
+    line-height: 1.22;
+    gap: 2px;
+  }
+
+  .finale-monogram {
+    margin-top: 18px;
+    font-size: 88px;
+  }
+
+  .finale .hashtag {
+    margin-top: 4px;
+    font-size: 23px;
+  }
+
+  .creator-signature {
+    margin-top: 10px;
+    width: min(245px, 72vw);
+    padding: 0 6px;
+    font-size: 13px;
+    line-height: 1.22;
+  }
+}

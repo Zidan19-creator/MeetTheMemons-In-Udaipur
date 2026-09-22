@@ -1045,7 +1045,7 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
   overflow: hidden;
   border: 1px solid rgba(239,214,178,.42);
   box-shadow: 0 26px 70px rgba(0,0,0,.28);
-  background-image: url("assets/udaipur-editorial-clean.webp?v=4");
+  background-image: url("assets/udaipur-approved.png?v=1");
   background-size: 210%;
   background-position: 56% 84%;
 }
@@ -1119,5 +1119,17 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
   .travel-detail-window {
     background-size: 225%;
     background-position: 60% 84%;
+  }
+}
+
+
+/* Lock Udaipur section height after final PNG swap */
+.travel.travel-editorial {
+  min-height: 900px;
+}
+
+@media (max-width: 860px) {
+  .travel.travel-editorial {
+    min-height: 940px;
   }
 }

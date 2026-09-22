@@ -1237,3 +1237,44 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     transform: translateY(-28px);
   }
 }
+
+
+/* Udaipur visual polish — brighter background, lower detail card */
+.travel-editorial .travel-bg img {
+  filter: saturate(1.02) brightness(.88) contrast(1.03) !important;
+}
+
+.travel-editorial .travel-bg::after {
+  background:
+    linear-gradient(90deg,
+      rgba(10,15,18,.48) 0%,
+      rgba(10,15,18,.28) 36%,
+      rgba(10,15,18,.06) 72%,
+      rgba(10,15,18,.14) 100%),
+    linear-gradient(180deg,
+      rgba(10,15,18,.03),
+      rgba(10,15,18,.12)) !important;
+}
+
+.travel-detail {
+  transform: translateY(70px);
+}
+
+@media (max-width: 860px) {
+  .travel-editorial .travel-bg img {
+    filter: saturate(1.06) brightness(.9) contrast(1.02) !important;
+  }
+
+  .travel-editorial .travel-bg::after {
+    background:
+      linear-gradient(180deg,
+        rgba(10,15,18,.34) 0%,
+        rgba(10,15,18,.12) 44%,
+        rgba(10,15,18,.24) 100%) !important;
+  }
+
+  .travel-detail {
+    margin-top: 150px;
+    transform: translateY(55px);
+  }
+}

@@ -921,3 +921,23 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     font-size: 14px;
   }
 }
+
+
+/* Safari-safe Udaipur image fix */
+.travel-editorial .travel-bg img,
+.travel-frame img {
+  display: block;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.travel-frame img {
+  aspect-ratio: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.travel-palace {
+  display: none !important;
+}

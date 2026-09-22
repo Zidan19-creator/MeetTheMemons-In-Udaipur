@@ -640,3 +640,61 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     line-height: 1.22;
   }
 }
+
+
+/* Finale spacing refinement — lower creator credit and open upper composition */
+@media (max-width: 600px) {
+  .finale {
+    min-height: 810px;
+    padding: 82px 18px 72px;
+  }
+
+  .finale .eyebrow {
+    margin-bottom: 20px;
+  }
+
+  .finale-date {
+    margin-top: 26px;
+  }
+
+  .finale-hosts {
+    margin-top: 18px;
+  }
+
+  .finale-monogram {
+    margin-top: 30px;
+  }
+
+  .finale .hashtag {
+    margin-top: 12px;
+  }
+
+  .creator-signature {
+    margin-top: 34px;
+    width: min(250px, 72vw);
+    transform: translateY(10px);
+  }
+}
+
+@media (min-width: 601px) {
+  .finale-date {
+    margin-top: 30px;
+  }
+
+  .finale-hosts {
+    margin-top: 18px;
+  }
+
+  .finale-monogram {
+    margin-top: 30px;
+  }
+
+  .finale .hashtag {
+    margin-top: 10px;
+  }
+
+  .creator-signature {
+    margin-top: 28px;
+    transform: translateY(8px);
+  }
+}

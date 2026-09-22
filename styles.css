@@ -1133,3 +1133,95 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     min-height: 940px;
   }
 }
+
+
+/* Udaipur cleanup — remove duplicate detail, crop embedded ZF, even lighting */
+.travel.travel-editorial {
+  min-height: 900px;
+  padding: 120px 7vw;
+  display: flex;
+  align-items: center;
+  background: #182127;
+}
+
+.travel-editorial .travel-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.travel-editorial .travel-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 68%;
+  transform: scale(1.12) !important;
+  transform-origin: center center;
+  filter: saturate(.86) brightness(.78) contrast(1.03) !important;
+}
+
+.travel-editorial .travel-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(12,17,20,.66) 0%,
+    rgba(12,17,20,.42) 34%,
+    rgba(12,17,20,.18) 68%,
+    rgba(12,17,20,.20) 100%
+  ) !important;
+}
+
+.travel-editorial-inner {
+  position: relative;
+  z-index: 2;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  display: block !important;
+}
+
+.travel-copy {
+  max-width: 520px;
+}
+
+.travel-detail,
+.travel-detail-window,
+.travel-detail span,
+.travel-frame,
+.travel-visual,
+.travel-caption,
+.travel-palace {
+  display: none !important;
+}
+
+@media (max-width: 860px) {
+  .travel.travel-editorial {
+    min-height: 940px;
+    padding: 96px 22px 88px;
+    align-items: flex-start;
+  }
+
+  .travel-editorial .travel-bg img {
+    object-position: 54% 68%;
+    transform: scale(1.16) !important;
+    filter: saturate(.86) brightness(.76) contrast(1.02) !important;
+  }
+
+  .travel-editorial .travel-bg::after {
+    background: linear-gradient(
+      180deg,
+      rgba(10,15,18,.52) 0%,
+      rgba(10,15,18,.24) 48%,
+      rgba(10,15,18,.30) 100%
+    ) !important;
+  }
+
+  .travel-editorial-inner {
+    display: block !important;
+  }
+
+  .travel-copy {
+    max-width: 320px;
+  }
+}

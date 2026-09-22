@@ -1432,3 +1432,21 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
     display: none !important;
   }
 }
+
+/* FINAL UDAIPUR TEXT POSITION */
+.travel.travel-editorial .travel-copy {
+  transform: translateY(-70px) !important;
+}
+
+/* REMOVE THE SQUARE COMPLETELY */
+.travel.travel-editorial .travel-detail,
+.travel.travel-editorial .travel-detail-window,
+.travel.travel-editorial .travel-detail span {
+  display: none !important;
+}
+
+@media (max-width: 860px) {
+  .travel.travel-editorial .travel-copy {
+    transform: translateY(-85px) !important;
+  }
+}

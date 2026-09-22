@@ -455,18 +455,27 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
 
 /* Finale hosts invitation */
 .finale-hosts {
-  margin: 22px auto 0;
-  max-width: 460px;
+  margin: 14px auto 0;
+  width: min(300px, 72vw);
+  padding: 0 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
   text-align: center;
   font-family: var(--serif);
-  font-size: clamp(15px, 1.6vw, 20px);
-  line-height: 1.35;
+  font-size: clamp(14px, 1.5vw, 18px);
+  line-height: 1.28;
   color: #f2e5d8;
   letter-spacing: .01em;
+}
+
+.finale-hosts span,
+.finale-hosts strong {
+  display: block;
+  width: 100%;
+  text-align: center;
 }
 
 .finale-hosts span:first-child {
@@ -477,7 +486,7 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
 .finale-hosts strong {
   color: #d4aa6d;
   font-weight: 500;
-  font-size: 1.08em;
+  font-size: 1.06em;
 }
 
 .finale-hosts span:last-child {
@@ -486,8 +495,10 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
 
 @media (max-width: 600px) {
   .finale-hosts {
-    margin-top: 18px;
-    max-width: 300px;
-    font-size: 15px;
+    margin-top: 12px;
+    width: min(250px, 70vw);
+    padding: 0 6px;
+    font-size: 14px;
+    line-height: 1.26;
   }
 }

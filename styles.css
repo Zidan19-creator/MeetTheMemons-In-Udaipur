@@ -131,7 +131,7 @@ blockquote { margin:42px 0; padding-left:22px; border-left:1px solid currentColo
 .events-intro { padding:100px 7vw 54px; }
 .events-title { display:flex; justify-content:space-between; align-items:end; gap:60px; }
 .events-title p { max-width:360px; font-family:var(--serif); font-size:20px; line-height:1.5; opacity:.65; }
-.event-rail { margin-top:68px; display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid currentColor; border-bottom:1px solid currentColor; border-color:color-mix(in srgb, currentColor 18%, transparent); }
+.event-rail { margin-top:68px; display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid currentColor; border-bottom:1px solid currentColor; border-color:color-mix(in srgb, currentColor 18%, transparent); }
 .rail-item { background:none; border:0; color:inherit; min-height:88px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; text-transform:uppercase; letter-spacing:.12em; font-size:10px; opacity:.52; border-right:1px solid color-mix(in srgb,currentColor 12%,transparent); }
 .rail-item:last-child { border-right:0; }
 .rail-item span { font-family:var(--serif); font-size:24px; letter-spacing:0; }

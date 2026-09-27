@@ -1,0 +1,33 @@
+name: Trim Sufi song from 1m21s
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/trim-sufi-121.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trim:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trim current Sufi track to original 1:21 point
+        run: |
+          ffmpeg -hide_banner -loglevel error \
+            -ss 56 \
+            -i "assets/sufi-akhiyan-udeekdiyan-from-25.mp3" \
+            -c:a libmp3lame -q:a 2 \
+            "sufi-from-1m21s.mp3"
+
+      - name: Upload trimmed MP3
+        uses: actions/upload-artifact@v4
+        with:
+          name: sufi-from-1m21s
+          path: sufi-from-1m21s.mp3
+          if-no-files-found: error

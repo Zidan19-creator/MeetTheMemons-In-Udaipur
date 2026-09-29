@@ -79,6 +79,7 @@
   let carnivalFadeRaf = 0;
   let receptionFadeRaf = 0;
   let activeMusic = 'none';
+  let sufiPrimed = false;
 
   const viewportHeight = () =>
     window.visualViewport?.height ||
@@ -182,6 +183,28 @@
     return Promise.resolve(true);
   };
 
+  // iOS/Safari audio unlock: prime the Sufi track during a real user gesture.
+  // It stays silent until the Sufi section actually reaches its trigger point.
+  const primeSufiAudio = () => {
+    if (!sufiAudio || sufiHasBegun() || !sufiAudio.paused || sufiPrimed) return;
+
+    try { sufiAudio.currentTime = 0; } catch (_) {}
+    sufiAudio.volume = 0;
+
+    const attempt = sufiAudio.play();
+    if (attempt && typeof attempt.then === 'function') {
+      attempt.then(() => {
+        sufiPrimed = true;
+        sufiAudio.volume = 0;
+      }).catch(() => {
+        sufiPrimed = false;
+      });
+    } else {
+      sufiPrimed = true;
+      sufiAudio.volume = 0;
+    }
+  };
+
   const enterSufi = async () => {
     if (!sufiAudio) return;
 
@@ -192,9 +215,10 @@
     stopAndReset(receptionAudio, 'reception');
     stopAndReset(receptionAudio, 'reception');
 
-    const started = await ensurePlaying(sufiAudio, 1);
+    const started = sufiAudio.paused ? await ensurePlaying(sufiAudio, 1) : true;
     if (!started || activeMusic !== 'sufi') return;
 
+    sufiPrimed = false;
     sufiAudio.loop = true;
     sufiAudio.volume = 1;
   };
@@ -316,7 +340,11 @@
     }
 
     activeMusic = 'none';
-    stopAndReset(sufiAudio, 'sufi');
+    if (sufiPrimed && sufiAudio && !sufiAudio.paused) {
+      sufiAudio.volume = 0;
+    } else {
+      stopAndReset(sufiAudio, 'sufi');
+    }
     stopAndReset(haldiAudio, 'haldi');
     stopAndReset(bollywoodAudio, 'bollywood');
     stopAndReset(carnivalAudio, 'carnival');
@@ -331,7 +359,11 @@
   window.addEventListener('scroll', queueMusicCheck, { passive: true });
   window.addEventListener('resize', queueMusicCheck, { passive: true });
 
-  const gestureMusicCheck = () => enforceMusicZone();
+  const gestureMusicCheck = () => {
+    primeSufiAudio();
+    enforceMusicZone();
+  };
+  document.addEventListener('touchstart', gestureMusicCheck, { passive: true });
   document.addEventListener('touchmove', gestureMusicCheck, { passive: true });
   document.addEventListener('touchend', gestureMusicCheck, { passive: true });
   document.addEventListener('pointerup', gestureMusicCheck, { passive: true });
